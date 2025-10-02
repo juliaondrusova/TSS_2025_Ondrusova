@@ -1,0 +1,22 @@
+{
+	"BUILD_DIR" : "C:/Users/julka/Desktop/tss/out/build/x64-Debug/TSS_App_autogen",
+	"CMAKE_BINARY_DIR" : "C:/Users/julka/Desktop/tss/out/build/x64-Debug",
+	"CMAKE_CURRENT_BINARY_DIR" : "C:/Users/julka/Desktop/tss/out/build/x64-Debug",
+	"CMAKE_CURRENT_SOURCE_DIR" : "C:/Users/julka/Desktop/tss",
+	"CMAKE_SOURCE_DIR" : "C:/Users/julka/Desktop/tss",
+	"CROSS_CONFIG" : false,
+	"GENERATOR" : "Ninja",
+	"INCLUDE_DIR" : "C:/Users/julka/Desktop/tss/out/build/x64-Debug/TSS_App_autogen/include",
+	"INPUTS" : [],
+	"LOCK_FILE" : "C:/Users/julka/Desktop/tss/out/build/x64-Debug/CMakeFiles/TSS_App_autogen.dir/AutoRcc_TSS_App_UVLADIE3JM_Lock.lock",
+	"MULTI_CONFIG" : false,
+	"OPTIONS" : [ "--no-zstd", "-name", "TSS_App" ],
+	"OUTPUT_CHECKSUM" : "UVLADIE3JM",
+	"OUTPUT_NAME" : "qrc_TSS_App.cpp",
+	"RCC_EXECUTABLE" : "C:/Qt/6.9.3/msvc2022_64/bin/rcc.exe",
+	"RCC_LIST_OPTIONS" : [ "--list" ],
+	"SETTINGS_FILE" : "C:/Users/julka/Desktop/tss/out/build/x64-Debug/CMakeFiles/TSS_App_autogen.dir/AutoRcc_TSS_App_UVLADIE3JM_Used.txt",
+	"SOURCE" : "C:/Users/julka/Desktop/tss/src/TSS_App.qrc",
+	"USE_BETTER_GRAPH" : true,
+	"VERBOSITY" : 0
+}

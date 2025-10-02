@@ -1,0 +1,5 @@
+C:/Users/julka/Desktop/tss/out/build/x64-Debug/CMakeFiles/TSS_App.dir
+C:/Users/julka/Desktop/tss/out/build/x64-Debug/CMakeFiles/edit_cache.dir
+C:/Users/julka/Desktop/tss/out/build/x64-Debug/CMakeFiles/rebuild_cache.dir
+C:/Users/julka/Desktop/tss/out/build/x64-Debug/CMakeFiles/TSS_App_autogen_timestamp_deps.dir
+C:/Users/julka/Desktop/tss/out/build/x64-Debug/CMakeFiles/TSS_App_autogen.dir
