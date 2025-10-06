@@ -31,8 +31,8 @@ Vytvoriť jednoduchú a rýchlu aplikáciu na Windows (v C++ a Qt), ktorá umož
 - [M] Je nutné, aby sa dali fotky importovať z externého disku a exportovať do iných typov obrázkových súborov.
 - [M] Fotky sa musia dať spracovať hromadne, ale aj po jednom.
 - [S] Aplikácia by mala podporovať typ obrázkoveho súboru .RAW.
-- [S] Aplikácia by mala mať jendoduché, čisté, ale moderné užívateľské rozhranie.
-- [S] Aplikácia by mohla mať dark mode.
+- [S] Aplikácia by mala mať jednoduché, čisté, ale moderné užívateľské rozhranie.
+- [C] Aplikácia by mohla mať dark mode.
 - [C] Aplikácia by mohla podporovať typ obrázkoveho súboru .tiff.
 - [C] V aplikácii by mohla byť možnosť použiť prednastavené filtre, aby sa dali fotky rýchlo vylepšiť.  
 - [C] Navrhovanie kategórií bude automatické (pomocou AI) a bude ich potom možné upraviť. 
@@ -65,7 +65,7 @@ Then: fotky sa importujú do aplikácie, respektíve exportujú do cieľového p
 
 ---
 
-## 7. Non-functional Requirements (NFRs) (4-6 metrics
+## 7. Non-functional Requirements (NFRs) (4-6 metrics)
 - Performance: 10 000 fotiek sa načíta do 5 sekúnd.
 - Reliability: Pri páde aplikácie sa automaticky uloží rozpracovaná práca.
 - Usability: Fotky sa dajú rýchlo a jednoducho prehliadať.
