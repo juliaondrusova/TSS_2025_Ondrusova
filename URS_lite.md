@@ -1,91 +1,93 @@
-# URS-lite — Softvér na fotografie
+# URS-lite — Photo Software
 
 ## 1. Vision
-Vytvoriť jednoduchú a rýchlu aplikáciu na Windows (v C++ a Qt), ktorá umožní organizáciu a základné úpravy fotografií, ich prezeranie, vyhľadávanie a export do rôznych formátov.
+Create a simple and fast Windows application (in C++ and Qt) that allows users to organize and perform basic edits on photos, browse them, search, and export to various formats.
 
 ---
 
 ## 2. Stakeholders (detect at least 3 stakeholders)
 | Stakeholder | Needs / Goals | Influence |
 |-------------|---------------|-----------|
-| Michal Kollár | Vyžaduje funkčnú aplikáciu do konca januára, s priebežným progresom | Vysoký |
-| Koncový používateľ | Chce jednoducho spravovať a upravovať svoje fotografie | Vysoký |
-| Univerzita / fakulta | Očakáva, že aplikácia bude originálna (nebude plagiátom) | Stredný |
-| Budúci zamestnávateľ | Chce, aby absolvent mal praktické skúsenosti so softvérovým inžinierstvom. | Stredný |
+| Michal Kollár | Requires a functional application by the end of January, with continuous progress updates | High |
+| End User | Wants to easily manage and edit their photos | High |
+| University / Faculty | Expects the application to be original (not a plagiarism) | Medium |
+| Future Employer | Wants the graduate to have practical experience in software engineering | Medium |
 
 ---
 
-## 3. User types / Personas
-- **Persona 1:** Nadšený fotograf — má veľa RAW a TIFF fotiek, potrebuje aj zložitejšie úpravy (aplikácia filtrov, rôzne vodotlače) a organizáciu podľa tagov.  
-- **Persona 2:** Bežný používateľ — má fotky z telefónu v jednom formáte, chce ich rýchlo prehliadať, triediť a občas upraviť. 
+## 3. User Types / Personas
+- **Persona 1:** Enthusiastic Photographer — has many RAW and TIFF photos, needs more advanced edits (filter application, various watermarks) and tag-based organization.  
+- **Persona 2:** Regular User — has photos from a phone in one format, wants to quickly browse, sort, and occasionally edit them.  
 
 ---
 
 ## 4. User Stories (Backlog) with MoSCoW
 
-- [M] Používateľ musí byť schopný fotky orezávať, otáčať a upravovať im jas, kontrast a sýtosť.
-- [M] Aplikácia musí podporovať nasledujúcce typy obrázkových súborov: .jpg, .png, .HEIC.
-- [M] K fotkám musí byť možné pridať tag, hodnotenie a komentár.
-- [M] V aplikácií musí byť možné vyhľadať fotky podľa dátumu, tagu a farby.
-- [M] Na fotky musí byť možné pridať vodotlač s logom.
-- [M] Je nutné, aby sa dali fotky importovať z externého disku a exportovať do iných typov obrázkových súborov.
-- [M] Fotky sa musia dať spracovať hromadne, ale aj po jednom.
-- [S] Aplikácia by mala podporovať typ obrázkoveho súboru .RAW.
-- [S] Aplikácia by mala mať jednoduché, čisté, ale moderné užívateľské rozhranie.
-- [C] Aplikácia by mohla mať dark mode.
-- [C] Aplikácia by mohla podporovať typ obrázkoveho súboru .tiff.
-- [C] V aplikácii by mohla byť možnosť použiť prednastavené filtre, aby sa dali fotky rýchlo vylepšiť.  
-- [C] Navrhovanie kategórií bude automatické (pomocou AI) a bude ich potom možné upraviť. 
+- [M] The user must be able to crop, rotate, and adjust brightness, contrast, and saturation of photos.  
+- [M] The application must support the following image file types: .jpg, .png, .HEIC.  
+- [M] Tags, ratings, and comments must be assignable to photos.  
+- [M] The application must allow searching photos by date, tag, and color.  
+- [M] Watermarks with a logo must be applicable to photos.  
+- [M] It must be possible to import photos from an external drive and export them to other image file types.  
+- [M] Photos must be processable both in bulk and individually.  
+- [S] The application should support the .RAW image file type.  
+- [S] The application should have a simple, clean, but modern user interface.  
+- [C] The application could have a dark mode.  
+- [C] The application could support the .tiff image file type.  
+- [C] The application could include preset filters for quick photo enhancement.  
+- [W] Category suggestions will be generated automatically (using AI) and can later be modified.  
 
 ---
 
 ## 5. Acceptance Criteria (for top Must stories)
 
-**Story:** Ako používateľ chcem vyhľadávať fotky podľa dátumu, tagu alebo farby.
+**Story:** As a user, I want to search photos by date, tag, or color.
 
-- AC-1: Používateľ zadá dátum/tag/farbu a systém vráti zodpovedajúce fotky.  
-- AC-2: Vyhľadávanie prebehne do 5 sekúnd aj pri 10 000 fotkách.  
-- AC-3: Používateľ môže kombinovať viacero filtrov.
- 
----
-
-## 6. BDD Scenario for 2 stories (Given-When-Then)
-
-**Story:** Používateľ chce orezávať, otáčať a upravovať jas, kontrast a sýtosť.
-
-Given: používateľ má otvorenú fotografiu.
-When: použije funkciu orezania, otočenia alebo zmeny jasu, kontrastu, sýtosti.
-Then: fotografia sa upraví a zobrazí sa náhľad zmien.
-
-**Story:** Používateľ chce fotky importovať a exportovať.
-
-Given: používateľ zvolí priečinok alebo externý disk
-When:  klikne na „Importovať“ alebo „Exportovať“.
-Then: fotky sa importujú do aplikácie, respektíve exportujú do cieľového priečinka vo vybranom formáte.
+- AC-1: The user enters a date/tag/color, and the system returns the matching photos.  
+- AC-2: The search completes within 5 seconds even for 10,000 photos.  
+- AC-3: The user can combine multiple filters.  
 
 ---
 
-## 7. Non-functional Requirements (NFRs) (4-6 metrics)
-- Performance: 10 000 fotiek sa načíta do 5 sekúnd.
-- Reliability: Pri páde aplikácie sa automaticky uloží rozpracovaná práca.
-- Usability: Fotky sa dajú rýchlo a jednoducho prehliadať.
-- UI: Musí byť jednoduché, moderné, prípadne s možnosťou Dark Mode.
-- Availability: Program musí fungovať bez potreby zložitej inštalácie a nesmie byť pamäťovo náročný.
+## 6. BDD Scenario for 2 Stories (Given-When-Then)
+
+**Story:** The user wants to crop, rotate, and adjust brightness, contrast, and saturation.
+
+Given: the user has an open photo.  
+When: they use the crop, rotate, or brightness/contrast/saturation adjustment function.  
+Then: the photo is modified, and a preview of the changes is displayed.  
+
+**Story:** The user wants to import and export photos.
+
+Given: the user selects a folder or an external drive.  
+When: they click “Import” or “Export.”  
+Then: the photos are imported into the application or exported to the target folder in the selected format.  
+
 ---
 
-## 8. Out of Scope (Won't have this time)
-- Pokročilá AI kategorizácia.  
-- Mobilná aplikácia
-- Cloud backup všetkých fotiek  
+## 7. Non-functional Requirements (NFRs) (4–6 metrics)
+
+- **Performance:** 10,000 photos load within 5 seconds.  
+- **Reliability:** In case of a crash, the application automatically saves ongoing work.  
+- **Usability:** Photos can be browsed quickly and easily.  
+- **UI:** Must be simple, modern, and optionally support Dark Mode.  
+- **Availability:** The program must work without complex installation and must not be memory-intensive.  
+
+---
+
+## 8. Out of Scope (Won’t have this time)
+- AI-based categorization  
+- Mobile application  
+- Cloud backup of all photos  
 
 ---
 
 ## 9. Open Questions and Assumptions
-- Q1: Aké presné exportné formáty budú povinné? 
-- Q2: Do akého času je potrebné načíťať 10 000 fotiek?
-- Q3: Akú maximálnu veľkosť môže mať výsledná aplikácia?
-- Q4: Bližšia špecifikácia hromadného spracovania.
-- Assumption 1: Používatelia budú pracovať iba na Windows systémoch.
-- Assumption 2: Použijú sa len knižnice s voľnou licenciou.
+- **Q1:** What exact export formats will be mandatory?  
+- **Q2:** Within what time limit must 10,000 photos be loaded?  
+- **Q3:** What is the maximum allowed size of the resulting application?  
+- **Q4:** More detailed specification of batch processing.  
+- **Assumption 1:** Users will work only on Windows systems.  
+- **Assumption 2:** Only freely licensed libraries will be used.  
 
 ---
