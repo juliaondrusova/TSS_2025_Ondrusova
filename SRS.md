@@ -88,9 +88,23 @@ Out of scope:
 
 ### 5.3 Use-Case Diagram
 
-![Use Case Diagram – Import Photos](diagrams/UC1.png)
-![Use Case Diagram – Browse Gallery](diagrams/UC2.png)
-![Use Case Diagram – Edit Photo](diagrams/UC3.png)
+<p align="center">
+  <img src="diagrams/UC1.png" alt="Import Photos" width="45%">
+  <img src="diagrams/UC2.png" alt="Browse Gallery" width="45%">
+</p>
+
+<p align="center">
+  <b>UC-1: Import Photos</b> &nbsp;&nbsp;&nbsp;&nbsp; <b>UC-2: Browse Gallery</b>
+</p>
+
+<p align="center">
+  <img src="diagrams/UC3.png" alt="Edit Photo" width="60%">
+</p>
+
+<p align="center">
+  <b>UC-3: Edit Photo</b>
+</p>
+
 
 ---
 
