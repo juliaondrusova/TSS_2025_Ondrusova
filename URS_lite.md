@@ -86,7 +86,8 @@ Then: the photos are imported into the application or exported to the target fol
 - **Q1:** What exact export formats will be mandatory?  
 - **Q2:** Within what time limit must 1,000 photos be loaded? Is 15 seconds fast enough?
 - **Q3:** What is the maximum allowed size of the resulting application?  
-- **Q4:** More detailed specification of batch processing.  
+- **Q4:** More detailed specification of batch processing. 
+- **Q5:** What is the maximum allowed size for a single image?
 - **Assumption 1:** Users will work only on Windows systems.  
 - **Assumption 2:** Only freely licensed libraries will be used.  
 
