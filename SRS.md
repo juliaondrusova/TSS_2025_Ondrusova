@@ -89,17 +89,24 @@ Out of scope:
 ### 5.3 Use-Case Diagram
 
 <p align="center">
-  <img src="diagrams/UC1.png" alt="Import Photos" width="30%">
-  <img src="diagrams/UC2.png" alt="Browse Gallery" width="30%">
-  <img src="diagrams/UC3.png" alt="Edit Photo" width="30%">
+  <img src="diagrams/UC-1 Import Photos.png" alt="UC-1: Import Photos" width="28%">
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="diagrams/UC-2 Browse Gallery.png" alt="UC-2: Browse Gallery" width="28%">
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="diagrams/UC-3 Edit Photo.png" alt="UC-3: Edit Photo" width="28%">
 </p>
 
 <p align="center">
-  <b>UC-1: Import Photos</b> &nbsp;&nbsp;&nbsp;
-  <b>UC-2: Browse Gallery</b> &nbsp;&nbsp;&nbsp;
-  <b>UC-3: Edit Photo</b>
+  <b>Figure 1: UC-1 Import Photos</b>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <b>Figure 2: UC-2 Browse Gallery</b>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <b>Figure 3: UC-3 Edit Photo</b>
 </p>
 
+<p align="center">
+  <i>User imports photos from folders, browses the gallery, and performs basic photo edits.</i>
+</p>
 
 
 ---
