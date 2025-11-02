@@ -1,6 +1,7 @@
 #include "TSS_App.h"
 #include "PhotoTableModel.h"
 #include "PhotoMetadata.h"
+#include "PhotoDetailDialog.h"
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QDirIterator>
@@ -49,6 +50,17 @@ TSS_App::TSS_App(QWidget *parent)
     connect(ui.btnExport, &QPushButton::clicked, this, &TSS_App::exportPhotos);
     connect(ui.btnToggleDarkMode, &QPushButton::clicked, this, &TSS_App::toggleDarkMode);
 
+    // Double-click on preview column ? open detail dialog
+    connect(ui.tableView, &QTableView::doubleClicked, this, [=](const QModelIndex& index) {
+        if (index.column() != PhotoTableModel::Preview) return;
+        auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
+        int realRow = model->currentPage() * model->pageSize() + index.row();
+        Photo photo = model->photoAt(realRow);
+
+        auto dlg = new PhotoDetailDialog(this);
+        dlg->setPhoto(photo);
+        dlg->exec();
+        });
 
     // Pagination controls
     connect(ui.btnNextPage, &QPushButton::clicked, this, [=]() {
