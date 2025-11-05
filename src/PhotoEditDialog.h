@@ -74,8 +74,9 @@ private:
     // Image processing
     void applyCrop();
     void applyRotation(QImage& image);
-    void applyBrightnessContrast(QImage& image);
+    void applyContrast(QImage& image);
     void applySaturation(QImage& image);
+    void applyBrightness(QImage& image);
     void applyActiveFilter(QImage& image);
     void applyWatermark(QImage& image);
     void displayScaledPreview();

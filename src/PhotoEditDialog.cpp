@@ -290,7 +290,8 @@ void PhotoEditorDialog::updatePreview() {
     QImage image = m_originalPixmap.toImage();
 
     applyRotation(image);
-    applyBrightnessContrast(image);
+    applyBrightness(image);
+    applyContrast(image);
     applySaturation(image);
     applyActiveFilter(image);
     applyWatermark(image);
@@ -307,18 +308,60 @@ void PhotoEditorDialog::applyRotation(QImage& image) {
     image = image.transformed(transform, Qt::SmoothTransformation);
 }
 
-void PhotoEditorDialog::applyBrightnessContrast(QImage& image) {
+void PhotoEditorDialog::applyContrast(QImage& image) 
+{
+    if (m_contrast == 0) return; // ziadna zmena
+
+    // vypocet kontrastneho faktora (rovnica z Photoshop-like modelu)
+    double factor = (259 * (m_contrast + 255)) / (255.0 * (259 - m_contrast));
+
+    for (int y = 0; y < image.height(); y++) 
+    {
+        QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y));
+        for (int x = 0; x < image.width(); x++) 
+        {
+            QColor pixelColor = QColor::fromRgb(line[x]);
+
+            int r = std::clamp(int(factor * (pixelColor.red() - 128) + 128), 0, 255);
+            int g = std::clamp(int(factor * (pixelColor.green() - 128) + 128), 0, 255);
+            int b = std::clamp(int(factor * (pixelColor.blue() - 128) + 128), 0, 255);
+
+            line[x] = qRgb(r, g, b);
+        }
+    }
 }
 
-void PhotoEditorDialog::applySaturation(QImage& image) {
-    // Ak je saturacia 0, netreba nic robit
-    if (m_saturation == 0)
+void PhotoEditorDialog::applyBrightness(QImage& image) 
+{
+    if (m_brightness == 0) return; // ziadna zmena
+
+    for (int y = 0; y < image.height(); y++) 
+    {
+        QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y));
+        for (int x = 0; x < image.width(); x++) 
+        {
+            QColor pixelColor = QColor::fromRgb(line[x]);
+
+            int r = std::clamp(pixelColor.red() + m_brightness, 0, 255);
+            int g = std::clamp(pixelColor.green() + m_brightness, 0, 255);
+            int b = std::clamp(pixelColor.blue() + m_brightness, 0, 255);
+
+            line[x] = qRgb(r, g, b);
+        }
+    }
+}
+
+void PhotoEditorDialog::applySaturation(QImage& image) 
+{
+    if (m_saturation == 0) // Ak je saturacia 0, netreba nic robit
         return;
 
     double factor = 1.0 + (m_saturation / 100.0); // -100 --> 0.0, 0 --> 1.0, 100 --> 2.0
 
-    for (int y = 0; y < image.height(); ++y) {
-        for (int x = 0; x < image.width(); ++x) {
+    for (int y = 0; y < image.height(); ++y) 
+    {
+        for (int x = 0; x < image.width(); ++x) 
+        {
             QColor color = image.pixelColor(x, y);
 
             float h, s, l;
@@ -334,7 +377,8 @@ void PhotoEditorDialog::applySaturation(QImage& image) {
 }
 
 
-void PhotoEditorDialog::displayScaledPreview() {
+void PhotoEditorDialog::displayScaledPreview() 
+{
     QPixmap scaled = m_editedPixmap.scaled(
         previewLabel->size(),
         Qt::KeepAspectRatio,
@@ -375,25 +419,29 @@ void PhotoEditorDialog::resetChanges() {
 
 // --- Filters ---
 
-void PhotoEditorDialog::applyFilter(int filterIndex) {
+void PhotoEditorDialog::applyFilter(int filterIndex) 
+{
     m_activeFilter = filterIndex;
     updatePreview();
 }
 
-void PhotoEditorDialog::applyActiveFilter(QImage& image) {
+void PhotoEditorDialog::applyActiveFilter(QImage& image) 
+{
     if (m_activeFilter == 0) return; // None
 
     // Show progress dialog for large images
     bool showProgress = (image.width() * image.height() > PROGRESS_THRESHOLD_PIXELS);
     QProgressDialog* progress = nullptr;
 
-    if (showProgress) {
+    if (showProgress) 
+    {
         progress = new QProgressDialog("Applying filter...", "Cancel", 0, 100, this);
         progress->setWindowModality(Qt::WindowModal);
         progress->setMinimumDuration(0);
     }
 
-    switch (m_activeFilter) {
+    switch (m_activeFilter) 
+    {
     case 1: applyGrayscaleFilter(image, progress); break;
     case 2: applySepiaFilter(image, progress); break;
     case 3: applyNegativeFilter(image, progress); break;
@@ -401,7 +449,8 @@ void PhotoEditorDialog::applyActiveFilter(QImage& image) {
     case 5: applyVintageFilter(image, progress); break;
     }
 
-    if (progress) {
+    if (progress) 
+    {
         progress->setValue(100);
         delete progress;
     }
@@ -424,12 +473,14 @@ void PhotoEditorDialog::applyVintageFilter(QImage& image, QProgressDialog* progr
 
 // --- Watermark ---
 
-void PhotoEditorDialog::addWatermark() {
+void PhotoEditorDialog::addWatermark() 
+{
     QString file = QFileDialog::getOpenFileName(
         this, "Select Watermark Image", "", "Images (*.png *.jpg *.jpeg *.bmp)"
     );
 
-    if (!file.isEmpty()) {
+    if (!file.isEmpty())
+    {
         m_watermarkPixmap = QPixmap(file);
         updatePreview();
     }
