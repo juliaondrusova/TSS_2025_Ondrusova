@@ -204,7 +204,11 @@ void PhotoEditorDialog::createActionButtons(QVBoxLayout* layout) {
 // --- Signal Connections ---
 
 void PhotoEditorDialog::connectSignals() {
-    
+    // Update timer for debouncing
+    updateTimer = new QTimer(this);
+    updateTimer->setSingleShot(true);
+    updateTimer->setInterval(TIMER_DELAY_MS);
+    connect(updateTimer, &QTimer::timeout, this, &PhotoEditorDialog::updatePreview);
 
     // Basic tools
     connect(rotateLeftBtn, &QPushButton::clicked, this, &PhotoEditorDialog::rotateLeft);
@@ -230,9 +234,11 @@ void PhotoEditorDialog::connectSignals() {
     connect(watermarkPositionCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
         this, [this](int index) {
             m_watermarkPosition = index;
+            updateTimer->start();
         });
     connect(watermarkOpacitySlider, &QSlider::valueChanged, this, [this](int value) {
         m_watermarkOpacity = value;
+        updateTimer->start();
         });
 }
 
@@ -241,6 +247,7 @@ void PhotoEditorDialog::connectSliderWithSpinbox(QSlider* slider, QSpinBox* spin
     connect(spinbox, QOverload<int>::of(&QSpinBox::valueChanged), slider, &QSlider::setValue);
     connect(slider, &QSlider::valueChanged, this, [this, &value](int newValue) {
         value = newValue;
+        updateTimer->start();
         });
 }
 
@@ -304,8 +311,28 @@ void PhotoEditorDialog::applyBrightnessContrast(QImage& image) {
 }
 
 void PhotoEditorDialog::applySaturation(QImage& image) {
-   
+    // Ak je saturacia 0, netreba nic robit
+    if (m_saturation == 0)
+        return;
+
+    double factor = 1.0 + (m_saturation / 100.0); // -100 --> 0.0, 0 --> 1.0, 100 --> 2.0
+
+    for (int y = 0; y < image.height(); ++y) {
+        for (int x = 0; x < image.width(); ++x) {
+            QColor color = image.pixelColor(x, y);
+
+            float h, s, l;
+            color.getHslF(&h, &s, &l);
+
+            // uprava saturacie
+            s = std::clamp(s * factor, 0.0, 1.0);
+
+            color.setHslF(h, s, l);
+            image.setPixelColor(x, y, color);
+        }
+    }
 }
+
 
 void PhotoEditorDialog::displayScaledPreview() {
     QPixmap scaled = m_editedPixmap.scaled(

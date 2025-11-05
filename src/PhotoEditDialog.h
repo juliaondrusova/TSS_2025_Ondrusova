@@ -113,6 +113,7 @@ private:
     QPushButton* applyBtn;
     QPushButton* resetBtn;
     QPushButton* cancelBtn;
+    QTimer* updateTimer;
 
     // Crop tool
     bool m_cropMode;
