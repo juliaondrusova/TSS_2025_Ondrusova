@@ -457,10 +457,83 @@ void PhotoEditorDialog::applyActiveFilter(QImage& image)
 }
 
 void PhotoEditorDialog::applyGrayscaleFilter(QImage& image, QProgressDialog* progress) {
+    if (image.format() != QImage::Format_RGB32 && image.format() != QImage::Format_ARGB32) 
+        image = image.convertToFormat(QImage::Format_RGB32);
+
+    int height = image.height();
+    int width = image.width();
+
+    if (progress) 
+    {
+        progress->setMaximum(height);
+        progress->show();
+    }
+
+    for (int y = 0; y < height; y++) 
+    {
+        QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y));
+        for (int x = 0; x < width; x++) 
+        {
+            QColor pixelColor(line[x]);
+            int gray = static_cast<int>(0.2126 * pixelColor.red() + 0.7152 * pixelColor.green() + 0.0722 * pixelColor.blue());
+            line[x] = qRgb(gray, gray, gray);
+        }
+
+        if (progress) 
+        {
+            progress->setValue(y);
+            QCoreApplication::processEvents(); // aktualizovanie dialogu
+        }
+    }
+
+    if (progress) 
+    {
+        progress->hide();
+    }
 }
 
-void PhotoEditorDialog::applySepiaFilter(QImage& image, QProgressDialog* progress) {
+
+void PhotoEditorDialog::applySepiaFilter(QImage& image, QProgressDialog* progress) 
+{
+    if (image.format() != QImage::Format_RGB32 && image.format() != QImage::Format_ARGB32)
+        image = image.convertToFormat(QImage::Format_RGB32);
+   
+    int height = image.height();
+    int width = image.width();
+
+    if (progress) 
+    {
+        progress->setMaximum(height);
+        progress->show();
+    }
+
+    for (int y = 0; y < height; y++) 
+    {
+        QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y));
+        for (int x = 0; x < width; x++) 
+        {
+            QColor pixelColor(line[x]);
+
+            int newR = static_cast<int>(0.393 * pixelColor.red() + 0.769 * pixelColor.green() + 0.189 * pixelColor.blue());
+            int newG = static_cast<int>(0.349 * pixelColor.red() + 0.686 * pixelColor.green() + 0.168 * pixelColor.blue());
+            int newB = static_cast<int>(0.272 * pixelColor.red() + 0.534 * pixelColor.green() + 0.131 * pixelColor.blue());
+
+            line[x] = qRgb(qMin(newR, 255), qMin(newG, 255), qMin(newB, 255));
+        }
+
+        if (progress) 
+        {
+            progress->setValue(y);
+            QCoreApplication::processEvents();
+        }
+    }
+
+    if (progress) 
+    {
+        progress->hide();
+    }
 }
+
 
 void PhotoEditorDialog::applyNegativeFilter(QImage& image, QProgressDialog* progress) {
 }
