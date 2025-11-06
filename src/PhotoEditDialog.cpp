@@ -535,11 +535,86 @@ void PhotoEditorDialog::applySepiaFilter(QImage& image, QProgressDialog* progres
 }
 
 
-void PhotoEditorDialog::applyNegativeFilter(QImage& image, QProgressDialog* progress) {
+void PhotoEditorDialog::applyNegativeFilter(QImage& image, QProgressDialog* progress) 
+{
+    if (image.format() != QImage::Format_RGB32 && image.format() != QImage::Format_ARGB32)
+        image = image.convertToFormat(QImage::Format_RGB32);
+
+    int height = image.height();
+    int width = image.width();
+
+    if (progress) 
+    {
+        progress->setMaximum(height);
+        progress->show();
+    }
+
+    for (int y = 0; y < height; y++) 
+    {
+        QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y));
+        for (int x = 0; x < width; x++) 
+        {
+            QColor pixeloColor(line[x]);
+            line[x] = qRgb(255 - pixeloColor.red(), 255 - pixeloColor.green(), 255 - pixeloColor.blue());
+        }
+
+        if (progress) 
+        {
+            progress->setValue(y);
+            QCoreApplication::processEvents();
+        }
+    }
+
+    if (progress)
+        progress->hide();
 }
 
-void PhotoEditorDialog::applyPastelFilter(QImage& image, QProgressDialog* progress) {
+
+void PhotoEditorDialog::applyPastelFilter(QImage& image, QProgressDialog* progress) 
+{
+    if (image.format() != QImage::Format_RGB32 && image.format() != QImage::Format_ARGB32)
+        image = image.convertToFormat(QImage::Format_RGB32);
+
+    int width = image.width();
+    int height = image.height();
+
+    if (progress) 
+    {
+        progress->setMaximum(height);
+        progress->show();
+    }
+
+    for (int y = 0; y < height; y++) 
+    {
+        QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y));
+        for (int x = 0; x < width; x++) 
+        {
+            QColor pixelColor(line[x]);
+
+            // Zosvetlenie a znizenie kontrastu
+            int r = qBound(0, static_cast<int>(pixelColor.red() * 0.8 + 60), 255);
+            int g = qBound(0, static_cast<int>(pixelColor.green() * 0.8 + 60), 255);
+            int b = qBound(0, static_cast<int>(pixelColor.blue() * 0.9 + 70), 255);
+
+            // Ruzovo-fialovy odtien
+            r = qBound(0, r + 10, 255);
+            b = qBound(0, b + 25, 255);
+
+            line[x] = qRgb(r, g, b);
+        }
+
+        if (progress) 
+        {
+            progress->setValue(y);
+            QCoreApplication::processEvents();
+        }
+    }
+
+    if (progress)
+        progress->hide();
+
 }
+
 
 void PhotoEditorDialog::applyVintageFilter(QImage& image, QProgressDialog* progress) {
 }
