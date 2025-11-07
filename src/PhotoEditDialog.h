@@ -64,8 +64,7 @@ private:
     void createFilterPanel(QVBoxLayout* layout);
     void createWatermarkPanel(QVBoxLayout* layout);
     void createActionButtons(QVBoxLayout* layout);
-    void createSliderWithSpinbox(const QString& label, QSlider*& slider,
-        QSpinBox*& spinbox, QVBoxLayout* layout);
+    void createSliderWithSpinbox(const QString& label, QSlider*& slider, QSpinBox*& spinbox, QVBoxLayout* layout);
 
     // Signal connections
     void connectSignals();
@@ -118,6 +117,9 @@ private:
 
     // Crop tool
     bool m_cropMode;
+    QRubberBand* m_rubberBand;
+    QPoint m_cropOrigin;
+    QRect m_cropRect;
 
     // Adjustment values
     int m_rotation;

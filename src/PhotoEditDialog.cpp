@@ -36,6 +36,7 @@ PhotoEditorDialog::PhotoEditorDialog(const Photo& photo, QWidget* parent)
     m_contrast(0),
     m_saturation(0),
     m_cropMode(false),
+    m_rubberBand(nullptr),
     m_activeFilter(0),
     m_watermarkOpacity(DEFAULT_WATERMARK_OPACITY),
     m_watermarkPosition(DEFAULT_WATERMARK_POSITION)
@@ -263,25 +264,120 @@ void PhotoEditorDialog::rotateRight() {
     updatePreview();
 }
 
-void PhotoEditorDialog::cropClicked(bool checked) {
- 
+void PhotoEditorDialog::cropClicked(bool checked)
+{
+    m_cropMode = checked;
+
+    // If crop mode is turned off and rubber band exists, hide it
+    if (!m_cropMode && m_rubberBand)
+        m_rubberBand->hide();
+
+    // Change cursor depending on crop mode
+    if (m_cropMode)
+        previewLabel->setCursor(Qt::CrossCursor);
+    else
+        previewLabel->setCursor(Qt::ArrowCursor);
 }
 
 // --- Mouse Events for Crop ---
 
-void PhotoEditorDialog::mousePressEvent(QMouseEvent* event) {
-   
+void PhotoEditorDialog::mousePressEvent(QMouseEvent* event)
+{
+    // Only start cropping if crop mode is active and mouse is over the image
+    if (m_cropMode && previewLabel->underMouse())
+    {
+        // Save the position where the user started dragging (relative to the label)
+        m_cropOrigin = event->pos() - previewLabel->pos();
+
+        // Create the rubber band if it does not already exist
+        if (!m_rubberBand)
+            m_rubberBand = new QRubberBand(QRubberBand::Rectangle, previewLabel);
+
+        // Initialize the rectangle (with 0 size) and make it visible
+        m_rubberBand->setGeometry(QRect(m_cropOrigin, QSize()));
+        m_rubberBand->show();
+    }
+
+    // Pass event to base class
+    QDialog::mousePressEvent(event);
 }
 
-void PhotoEditorDialog::mouseMoveEvent(QMouseEvent* event) {
-  
+void PhotoEditorDialog::mouseMoveEvent(QMouseEvent* event)
+{
+    // If user is dragging and crop rectangle is visible, resize it
+    if (m_cropMode && m_rubberBand && m_rubberBand->isVisible())
+    {
+        // Current mouse position relative to label
+        QPoint currentPos = event->pos() - previewLabel->pos();
+
+        // QRect::normalized() ensures the rectangle always has positive width/height
+        QRect rect(m_cropOrigin, currentPos);
+        m_rubberBand->setGeometry(rect.normalized());
+    }
+
+    // Pass event to base class
+    QDialog::mouseMoveEvent(event);
 }
 
-void PhotoEditorDialog::mouseReleaseEvent(QMouseEvent* event) {
-  
+void PhotoEditorDialog::mouseReleaseEvent(QMouseEvent* event)
+{
+    // When mouse is released, apply crop if rectangle is visible
+    if (m_cropMode && m_rubberBand && m_rubberBand->isVisible())
+    {
+        applyCrop();            // Crop the selected area
+        m_rubberBand->hide();   // Hide selection rectangle
+
+        // Turn off crop mode and reset cursor
+        cropBtn->setChecked(false);
+        m_cropMode = false;
+        previewLabel->setCursor(Qt::ArrowCursor);
+    }
+
+    // Pass event to base class
+    QDialog::mouseReleaseEvent(event);
 }
 
-void PhotoEditorDialog::applyCrop() {
+void PhotoEditorDialog::applyCrop()
+{
+    // If rubber band does not exist, nothing to crop
+    if (!m_rubberBand)
+        return;
+
+    QRect cropRect = m_rubberBand->geometry();
+    QPixmap displayedPixmap = previewLabel->pixmap(Qt::ReturnByValue);
+
+    // Stop if there is no image loaded
+    if (displayedPixmap.isNull())
+        return;
+
+    QSize labelSize = previewLabel->size();
+    QSize pixmapSize = displayedPixmap.size();
+
+    // Adjust for centering: if the image is centered in the label,
+    // the crop rectangle must be shifted accordingly
+    int offsetX = (labelSize.width() - pixmapSize.width()) / 2;
+    int offsetY = (labelSize.height() - pixmapSize.height()) / 2;
+    cropRect.translate(-offsetX, -offsetY);
+
+    // Compute scale ratio between displayed image and original image
+    double scaleX = (double)m_editedPixmap.width() / pixmapSize.width();
+    double scaleY = (double)m_editedPixmap.height() / pixmapSize.height();
+
+    // Convert crop rectangle to original image coordinates
+    m_cropRect = QRect(
+        cropRect.x() * scaleX,
+        cropRect.y() * scaleY,
+        cropRect.width() * scaleX,
+        cropRect.height() * scaleY
+    );
+
+    // If valid crop area, perform crop and refresh preview
+    if (m_cropRect.isValid() && !m_cropRect.isEmpty())
+    {
+        m_originalPixmap = m_editedPixmap.copy(m_cropRect);
+        m_cropRect = QRect();   // Reset stored crop area
+        updatePreview();        // Update displayed image
+    }
 }
 
 // --- Image Processing ---
@@ -616,7 +712,9 @@ void PhotoEditorDialog::applyPastelFilter(QImage& image, QProgressDialog* progre
 }
 
 
-void PhotoEditorDialog::applyVintageFilter(QImage& image, QProgressDialog* progress) {
+void PhotoEditorDialog::applyVintageFilter(QImage& image, QProgressDialog* progress) 
+{
+
 }
 
 // --- Watermark ---
