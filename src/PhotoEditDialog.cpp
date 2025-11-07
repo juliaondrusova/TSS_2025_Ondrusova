@@ -478,7 +478,7 @@ void PhotoEditorDialog::displayScaledPreview()
     QPixmap scaled = m_editedPixmap.scaled(
         previewLabel->size(),
         Qt::KeepAspectRatio,
-        Qt::FastTransformation
+        Qt::SmoothTransformation
     );
     previewLabel->setPixmap(scaled);
 }

@@ -5,6 +5,8 @@
 #include <algorithm>
 
 // Constants
+static const QChar STAR_FILLED(0x2605); 
+static const QChar STAR_EMPTY(0x2606);  
 
 static const QStringList COLUMN_HEADERS = {
     "Preview", "Name", "Tag", "Rating", "Comment", "Size", "Date", "Actions"
@@ -55,6 +57,9 @@ QVariant PhotoTableModel::data(const QModelIndex& index, int role) const {
 
     case Qt::TextAlignmentRole:
         return (column == Preview || column == Actions) ? Qt::AlignCenter : QVariant();
+
+    case Qt::ToolTipRole:
+        return getTooltip(photo, column);
 
     default:
         return QVariant();
@@ -221,7 +226,7 @@ QVariant PhotoTableModel::getDisplayText(const Photo& photo, int column) const {
     switch (column) {
     case Name:     return photo.filePath();
     case Tag:      return photo.tag();
-    case Rating:   return photo.rating();
+    case Rating:   return formatRatingStars(photo.rating());
     case Comment:  return photo.comment();
     case Size:     return photo.size();
     case DateTime: return photo.dateTime().toString("dd.MM.yyyy hh:mm");
@@ -234,9 +239,39 @@ QVariant PhotoTableModel::getDecoration(const Photo& photo, int column) const {
         return photo.preview();
     }
 
+    if (column == Actions) {
+        QIcon icon = QApplication::style()->standardIcon(QStyle::SP_ArrowForward);
+        return icon.pixmap(25, 25);
+    }
+
     return QVariant();
 }
 
+
+QVariant PhotoTableModel::getTooltip(const Photo& photo, int column) const {
+    switch (column) {
+    case Preview:  return QString("Double-click to open photo detail");
+    case Name:     return photo.filePath();
+    case Tag:      return photo.tag();
+    case Rating:   return QString("Enter value from 0 to 5");
+    case Comment:  return photo.comment();
+    case Size:     return photo.size();
+    case DateTime: return photo.dateTime().toString("dd.MM.yyyy hh:mm");
+    case Actions:  return QString("Edit photo");
+    default:       return QVariant();
+    }
+}
+
+QString PhotoTableModel::formatRatingStars(int rating) const {
+    QString stars;
+    stars.reserve(5);
+
+    for (int i = 0; i < 5; ++i) {
+        stars += (i < rating) ? STAR_FILLED : STAR_EMPTY;
+    }
+
+    return stars;
+}
 
 bool PhotoTableModel::updatePhotoField(Photo& photo, int column, const QVariant& value) {
     QString filePath = photo.filePath();

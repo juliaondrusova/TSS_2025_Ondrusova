@@ -158,7 +158,21 @@ private:
      */
     QVariant getDecoration(const Photo& photo, int column) const;
 
-   
+    /**
+      * @brief Get tooltip text for a cell
+      * @param photo Photo object
+      * @param column Column index
+      * @return Tooltip text
+      */
+    QVariant getTooltip(const Photo& photo, int column) const;
+
+    /**
+    * @brief Format rating as star characters
+    * @param rating Rating value (0-5)
+    * @return String with filled and empty stars
+    */
+    QString formatRatingStars(int rating) const;
+
     /**
      * @brief Update photo data for a specific column
      * @param photo Photo to update

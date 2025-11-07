@@ -90,8 +90,10 @@ TSS_App::TSS_App(QWidget *parent)
     updatePageLabel();
 }
 
-TSS_App::~TSS_App()
-{}
+/**
+ * @brief Default destructor.
+ */
+TSS_App::~TSS_App() = default;
 
 
  
