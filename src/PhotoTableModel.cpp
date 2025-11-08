@@ -115,8 +115,33 @@ bool PhotoTableModel::setData(const QModelIndex& index, const QVariant& value, i
 }
 
 void PhotoTableModel::sort(int column, Qt::SortOrder order) {
+    // Get the active list of photos that needs to be sorted
+    QList<Photo>& photos = getActivePhotos();
 
+    // Determine the sorting order: ascending or descending
+    bool ascending = (order == Qt::AscendingOrder);
+
+    // std::sort goes through all items and sorts them based on the comparison function
+    // The lambda compares two photos and returns true if the first should come before the second
+    std::sort(photos.begin(), photos.end(), [column, ascending](const Photo& a, const Photo& b) {
+        switch (column) {
+        case Name:
+            return ascending ? a.filePath() < b.filePath() : a.filePath() > b.filePath();
+        case Size:
+            return ascending ? a.sizeBytes() < b.sizeBytes() : a.sizeBytes() > b.sizeBytes();
+        case DateTime:
+            return ascending ? a.dateTime() < b.dateTime() : a.dateTime() > b.dateTime();
+        case Rating:
+            return ascending ? a.rating() < b.rating() : a.rating() > b.rating();
+        default:
+            return false; // Unknown column ? keep the current order
+        }
+        });
+
+    // Notify the table model that the order has changed so the view updates
+    emit layoutChanged();
 }
+
 
 // --- Public Interface ---
 

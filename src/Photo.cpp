@@ -20,12 +20,16 @@ Photo::Photo(const QString& path)
 
     // --- File size calculation (human-readable) ---
     const qint64 sizeBytes = info.size();
-    if (sizeBytes < ONE_MB) {
-        const double kb = sizeBytes / static_cast<double>(ONE_KB);
+    m_sizeBytes = sizeBytes;
+    if (sizeBytes < ONE_KB) {
+        m_size = QString::number(sizeBytes) + " B";
+    }
+    else if (sizeBytes < ONE_MB) {
+        double kb = sizeBytes / static_cast<double>(ONE_KB);
         m_size = QString::number(kb, 'f', 1) + " KB";
     }
     else {
-        const double mb = sizeBytes / static_cast<double>(ONE_MB);
+        double mb = sizeBytes / static_cast<double>(ONE_MB);
         m_size = QString::number(mb, 'f', 1) + " MB";
     }
 

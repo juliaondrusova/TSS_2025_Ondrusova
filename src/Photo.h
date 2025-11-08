@@ -24,6 +24,7 @@ public:
     QString comment() const { return m_comment; }     ///< User comment or description.
     QString size() const { return m_size; }           ///< Human-readable file size.
     QDateTime dateTime() const { return m_dateTime; } ///< File modification timestamp.
+    qint64 sizeBytes() const { return m_sizeBytes; }  ///< Store exact size in bytes
 
     // --- Inline simple setters ---
     void setFilePath(const QString& path) { m_filePath = path; }
@@ -54,6 +55,7 @@ private:
     int m_rating;         ///< Rating from 0 to 5.
     QString m_comment;    ///< Optional user comment.
     QString m_size;       ///< File size as a formatted string (e.g., "2.4 MB").
+    qint64 m_sizeBytes;   ///< File size in bytes
     QDateTime m_dateTime; ///< Last modification date/time.
     mutable QPixmap m_preview; ///< Cached thumbnail (mutable for lazy loading).
 };

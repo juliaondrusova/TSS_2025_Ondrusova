@@ -31,6 +31,8 @@ TSS_App::TSS_App(QWidget *parent)
     ui.tableView->setSortingEnabled(true);
     ui.tableView->horizontalHeader()->setSortIndicatorShown(true);
     ui.tableView->horizontalHeader()->setSectionsClickable(true);
+    ui.tableView->sortByColumn(PhotoTableModel::DateTime, Qt::AscendingOrder);
+
 
     // Set column widths
     ui.tableView->setColumnWidth(PhotoTableModel::Preview, 110);
