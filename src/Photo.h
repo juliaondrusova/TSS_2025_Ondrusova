@@ -47,7 +47,7 @@ public:
      * @brief Generates a scaled thumbnail preview for the photo.
      * @param size Target width/height (default 68px).
      */
-    void generatePreview(int size = 68);
+    void generatePreview(int size = 90);
 
 private:
     QString m_filePath;   ///< Absolute path to the photo.

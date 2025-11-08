@@ -2,6 +2,7 @@
 
 #include <QtWidgets/QMainWindow>
 #include "ui_TSS_App.h"
+#include "ThemeUtils.h"
 
 /**
  * @class PhotoManager

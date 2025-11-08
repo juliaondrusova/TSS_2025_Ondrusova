@@ -18,6 +18,8 @@ TSS_App::TSS_App(QWidget *parent)
     : QMainWindow(parent)
 {
     ui.setupUi(this);
+    ThemeUtils::setWidgetDarkMode(this, true);
+
 
     // Initialize the photo table model
     auto model = new PhotoTableModel(this);
@@ -62,6 +64,7 @@ TSS_App::TSS_App(QWidget *parent)
 
         auto dlg = new PhotoDetailDialog(this);
         dlg->setPhoto(photo);
+        ThemeUtils::setWidgetDarkMode(dlg, m_darkMode);
         dlg->exec();
         });
 
@@ -73,6 +76,7 @@ TSS_App::TSS_App(QWidget *parent)
         Photo photo = model->photoAt(realRow);
 
         auto editor = new PhotoEditorDialog(photo, this);
+        ThemeUtils::setWidgetDarkMode(editor, m_darkMode);
         editor->exec();
         });
 
@@ -171,4 +175,5 @@ void TSS_App::updatePageLabel() {
  */
 void TSS_App::toggleDarkMode() {
     m_darkMode = !m_darkMode;
+    ThemeUtils::setWidgetDarkMode(this, m_darkMode);
 }
