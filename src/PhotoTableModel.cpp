@@ -319,15 +319,11 @@ void PhotoTableModel::initializeWithPaths(const QStringList& allPaths)
     int oldSize = m_allPhotos.size();
     m_currentPage = 0;
 
-    QElapsedTimer timer;
-    timer.start();
-
     QProgressDialog progress("Loading photos...", "Cancel", 0, allPaths.size());
     progress.setWindowModality(Qt::ApplicationModal);
     progress.setWindowTitle("Initializing Photos");
-    progress.setMinimumDuration(0); // do not show automatically
-
-    bool progressVisible = false;
+    progress.setMinimumDuration(0);
+    progress.show();
 
     // Pre-allocate memory for efficiency
     m_allPhotos.reserve(oldSize + allPaths.size());
@@ -339,29 +335,13 @@ void PhotoTableModel::initializeWithPaths(const QStringList& allPaths)
 
         // Append new Photo with only the file path (no heavy data yet)
         m_allPhotos.append(Photo(allPaths[i]));
-
-        // Load full details (thumbnails, metadata) only for the first page
-        if (i < m_pageSize) 
-            //m_allPhotos[oldSize + i] = Photo(allPaths[i]); // reload full data
-
-        // Show progress dialog only if loading takes more than 500 ms
-        if (!progressVisible && timer.elapsed() > 500) 
-        {
-            progress.show();
-            progressVisible = true;
-        }
-
-        // Update progress if visible
-        if (progressVisible) 
-        {
-            progress.setValue(i + 1);
-            QCoreApplication::processEvents(); // allow GUI to update
-        }
+      
+       // Update progress
+        progress.setValue(i + 1);
+        QCoreApplication::processEvents(); // refresh GUI
     }
 
-    if (progressVisible)
-        progress.close();
-
+    progress.close();
     endResetModel();
 }
 

@@ -99,6 +99,8 @@ TSS_App::TSS_App(QWidget *parent)
 /**
  * @brief Default destructor.
  */
+
+#include <QThread>
 TSS_App::~TSS_App() = default;
 
 
@@ -129,7 +131,6 @@ void TSS_App::importPhotos() {
     QApplication::setOverrideCursor(Qt::WaitCursor);
     model->initializeWithPaths(files);
     QApplication::restoreOverrideCursor();
-
     QMessageBox::information(this, "Done",
         QString("Initialized %1 photos. Data loaded for first page.").arg(files.size()));
 
