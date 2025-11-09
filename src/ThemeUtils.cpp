@@ -9,6 +9,7 @@
 #include <QPushButton>
 #include <QScrollArea>
 
+
 namespace ThemeUtils {
     void setWidgetDarkMode(QWidget* widget, bool darkMode) {
         if (!widget) return;
@@ -166,6 +167,24 @@ namespace ThemeUtils {
                 QSlider::handle:horizontal:hover {
                     background-color: #ef4444;
                 }
+
+                QComboBox {
+                    background-color: #1a1a1a;   /* tmavé pozadie */
+                    color: #f5f5f5;              /* svetlý text */
+                    border: 2px solid #2a2a2a;
+                    border-radius: 8px;
+                    padding: 5px 10px;
+                    font-size: 10pt;
+                }
+
+                QComboBox QAbstractItemView {
+                    background-color: #1a1a1a;   /* tmavé pozadie drop-down */
+                    color: #f5f5f5;              /* svetlý text položiek */
+                    border: 1px solid #2a2a2a;
+                    selection-background-color: #dc2626;
+                    selection-color: #ffffff;
+                }
+
             )");
         }
         else {
@@ -317,6 +336,24 @@ namespace ThemeUtils {
                 QSlider::handle:horizontal:hover {
                     background-color: #ef4444;
                 }
+
+                QComboBox {
+                    background-color: #ffffff;   /* biele pozadie */
+                    color: #0f172a;              /* èierny text */
+                    border: 2px solid #e2e8f0;
+                    border-radius: 8px;
+                    padding: 5px 10px;
+                    font-size: 10pt;
+                }
+
+                QComboBox QAbstractItemView {
+                    background-color: #ffffff;   /* biele pozadie drop-down */
+                    color: #0f172a;              /* èierny text položiek */
+                    border: 1px solid #e2e8f0;
+                    selection-background-color: #dc2626;
+                    selection-color: #ffffff;
+                }
+
             )");
         }
 
@@ -367,6 +404,18 @@ namespace ThemeUtils {
             p.setColor(QPalette::Base, darkMode ? QColor("#1a1a1a") : QColor("#f8fafc"));
             p.setColor(QPalette::Window, darkMode ? QColor("#1a1a1a") : QColor("#f8fafc"));
             scroll->setPalette(p);
+
+        QList<QWidget*> allWidgets = widget->findChildren<QWidget*>();
+            for (QWidget* w : allWidgets) 
+            {
+                // if widget has no children and no layout, assume it's a spacer
+                if (!w->layout() && w->children().isEmpty()) 
+                {
+                    w->setStyleSheet("background: transparent; border: none;");
+                    w->setAttribute(Qt::WA_TranslucentBackground);
+                }
+            }
+
         }
     }
 } // namespace ThemeUtils

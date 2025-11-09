@@ -104,6 +104,13 @@ public:
      */
     int pageSize() const { return m_pageSize; }
 
+
+
+    void firstPage();
+    void lastPage();
+    void setPageSize(int newSize);
+
+
     /**
      * @brief Get total number of pages
      * @return Total pages for current filter set

@@ -220,11 +220,45 @@ void PhotoTableModel::prevPage() {
     }
 }
 
-
-
 int PhotoTableModel::totalPages() const {
     const QList<Photo>& photos = getActivePhotos();
     return (photos.size() + m_pageSize - 1) / m_pageSize;
+}
+
+
+void PhotoTableModel::setPageSize(int newSize)
+{
+    if (newSize <= 0 || newSize == m_pageSize)
+        return;
+
+    beginResetModel();
+    m_pageSize = newSize;
+    m_currentPage = 0; // reset to first page
+    endResetModel();
+}
+
+
+void PhotoTableModel::firstPage()
+{
+    if (m_currentPage == 0) return;
+
+    beginResetModel();
+    m_currentPage = 0;
+    endResetModel();
+}
+
+void PhotoTableModel::lastPage()
+{
+    const QList<Photo>& photos = getActivePhotos();
+    int total = photos.size();
+    int lastPage = (total + m_pageSize - 1) / m_pageSize - 1;
+
+    if (lastPage < 0 || m_currentPage == lastPage)
+        return;
+
+    beginResetModel();
+    m_currentPage = lastPage;
+    endResetModel();
 }
 
 // --- Private Helper Methods ---
@@ -344,4 +378,3 @@ void PhotoTableModel::initializeWithPaths(const QStringList& allPaths)
     progress.close();
     endResetModel();
 }
-

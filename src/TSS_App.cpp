@@ -93,6 +93,28 @@ TSS_App::TSS_App(QWidget *parent)
         updatePageLabel();
         });
 
+    connect(ui.btnFirstPage, &QPushButton::clicked, this, [=]() {
+        auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
+        model->firstPage();
+        updatePageLabel();
+        });
+
+    connect(ui.btnLastPage, &QPushButton::clicked, this, [=]() {
+        auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
+        model->lastPage();
+        updatePageLabel();
+        });
+
+    connect(ui.comboPageSize, &QComboBox::currentTextChanged, this, [=](const QString& text) {
+        bool ok;
+        int size = text.toInt(&ok);
+        if (ok) {
+            auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
+            model->setPageSize(size);
+            updatePageLabel();
+        }
+        });
+
     updatePageLabel();
 }
 
@@ -146,7 +168,8 @@ void TSS_App::exportPhotos() {
 /**
  * @brief Updates the page label and enables/disables navigation buttons.
  */
-void TSS_App::updatePageLabel() {
+void TSS_App::updatePageLabel() 
+{
     auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
     int current = model->currentPage() + 1;
     int total = model->totalPages();
@@ -157,6 +180,8 @@ void TSS_App::updatePageLabel() {
 
     ui.btnPrevPage->setEnabled(model->currentPage() > 0);
     ui.btnNextPage->setEnabled(current < total);
+    ui.btnFirstPage->setEnabled(model->currentPage() > 0);
+    ui.btnLastPage->setEnabled(current < total);
 }
 
 /**
