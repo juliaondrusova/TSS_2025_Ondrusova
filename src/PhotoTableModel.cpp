@@ -3,6 +3,9 @@
 #include <QApplication>
 #include <QStyle>
 #include <algorithm>
+#include <QProgressDialog>
+#include <QCoreApplication>
+#include <QElapsedTimer>
 
 // Constants
 static const QChar STAR_FILLED(0x2605); 
@@ -33,22 +36,22 @@ int PhotoTableModel::columnCount(const QModelIndex&) const {
     return ColumnCount;
 }
 
-QVariant PhotoTableModel::data(const QModelIndex& index, int role) const {
-    if (!index.isValid()) {
+QVariant PhotoTableModel::data(const QModelIndex& index, int role) const 
+{
+    if (!index.isValid())
         return QVariant();
-    }
 
     const QList<Photo>& photos = getActivePhotos();
     int realIndex = getRealIndex(index.row());
 
-    if (realIndex < 0 || realIndex >= photos.size()) {
+    if (realIndex < 0 || realIndex >= photos.size()) 
         return QVariant();
-    }
 
     const Photo& photo = photos[realIndex];
     int column = index.column();
 
-    switch (role) {
+    switch (role) 
+    {
     case Qt::DisplayRole:
         return getDisplayText(photo, column);
 
@@ -217,6 +220,8 @@ void PhotoTableModel::prevPage() {
     }
 }
 
+
+
 int PhotoTableModel::totalPages() const {
     const QList<Photo>& photos = getActivePhotos();
     return (photos.size() + m_pageSize - 1) / m_pageSize;
@@ -298,7 +303,65 @@ QString PhotoTableModel::formatRatingStars(int rating) const {
     return stars;
 }
 
-bool PhotoTableModel::updatePhotoField(Photo& photo, int column, const QVariant& value) {
+bool PhotoTableModel::updatePhotoField(const Photo& photo, int column, const QVariant& value) {
     QString filePath = photo.filePath();
         return false;
 }
+
+
+// --- Lazy Loading Interface ---
+
+void PhotoTableModel::initializeWithPaths(const QStringList& allPaths) 
+{
+    beginResetModel();
+
+    // Keep old photos, do not clear them
+    int oldSize = m_allPhotos.size();
+    m_currentPage = 0;
+
+    QElapsedTimer timer;
+    timer.start();
+
+    QProgressDialog progress("Loading photos...", "Cancel", 0, allPaths.size());
+    progress.setWindowModality(Qt::ApplicationModal);
+    progress.setWindowTitle("Initializing Photos");
+    progress.setMinimumDuration(0); // do not show automatically
+
+    bool progressVisible = false;
+
+    // Pre-allocate memory for efficiency
+    m_allPhotos.reserve(oldSize + allPaths.size());
+
+    for (int i = 0; i < allPaths.size(); ++i) 
+    {
+        if (progress.wasCanceled())
+            break;
+
+        // Append new Photo with only the file path (no heavy data yet)
+        m_allPhotos.append(Photo(allPaths[i]));
+
+        // Load full details (thumbnails, metadata) only for the first page
+        if (i < m_pageSize) 
+            //m_allPhotos[oldSize + i] = Photo(allPaths[i]); // reload full data
+
+        // Show progress dialog only if loading takes more than 500 ms
+        if (!progressVisible && timer.elapsed() > 500) 
+        {
+            progress.show();
+            progressVisible = true;
+        }
+
+        // Update progress if visible
+        if (progressVisible) 
+        {
+            progress.setValue(i + 1);
+            QCoreApplication::processEvents(); // allow GUI to update
+        }
+    }
+
+    if (progressVisible)
+        progress.close();
+
+    endResetModel();
+}
+

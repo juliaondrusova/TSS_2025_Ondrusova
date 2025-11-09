@@ -102,7 +102,6 @@ TSS_App::TSS_App(QWidget *parent)
 TSS_App::~TSS_App() = default;
 
 
- 
 void TSS_App::importPhotos() {
     auto& metaManager = PhotoMetadataManager::instance();
     metaManager.loadFromFile();
@@ -121,29 +120,18 @@ void TSS_App::importPhotos() {
     }
 
     if (QMessageBox::question(this, "Import Photos",
-        QString("Found %1 images. Import them?\n\n")
-        .arg(files.size()),
+        QString("Found %1 images. Import them?\n\n").arg(files.size()),
         QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes)
         return;
 
-    auto progress = new QProgressDialog("Importing photos...", "Cancel", 0, files.size(), this);
-    progress->setWindowModality(Qt::WindowModal);
-    progress->setWindowTitle("Import Progress");
-
+    
     auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    model->initializeWithPaths(files);
+    QApplication::restoreOverrideCursor();
 
-    int count = 0;
-    for (const QString& file : files) {
-        if (progress->wasCanceled())
-            break;
-
-        model->addPhoto(file);
-        progress->setValue(++count);
-        qApp->processEvents();
-    }
-
-    progress->close();
-    QMessageBox::information(this, "Done", QString("Imported %1 photos.").arg(count));
+    QMessageBox::information(this, "Done",
+        QString("Initialized %1 photos. Data loaded for first page.").arg(files.size()));
 
     updatePageLabel();
 }

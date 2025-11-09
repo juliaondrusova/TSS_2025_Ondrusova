@@ -16,6 +16,7 @@ class PhotoTableModel : public QAbstractTableModel {
     Q_OBJECT
 
 public:
+  
     /**
      * @brief Column indices for the table
      */
@@ -109,6 +110,12 @@ public:
      */
     int totalPages() const;
 
+    /**
+    * @brief Initialize the model with a list of photo paths.
+    * @param allPaths List of photo file paths to add to the model.
+    */
+    void initializeWithPaths(const QStringList& allPaths);
+
 private:
     /**
      * @brief Apply current filters to photo collection
@@ -121,7 +128,6 @@ private:
      */
     const QList<Photo>& getActivePhotos() const;
     QList<Photo>& getActivePhotos();
-
     /**
      * @brief Convert table row to real index in photo list
      * @param row Table row number
@@ -180,7 +186,7 @@ private:
      * @param value New value
      * @return True if data was updated
      */
-    bool updatePhotoField(Photo& photo, int column, const QVariant& value);
+    bool updatePhotoField(const Photo& photo, int column, const QVariant& value);
 
     // Storage
     QList<Photo> m_allPhotos;      ///< All photos
