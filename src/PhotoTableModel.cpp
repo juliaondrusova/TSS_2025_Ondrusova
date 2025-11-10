@@ -298,9 +298,30 @@ QVariant PhotoTableModel::getDisplayText(const Photo& photo, int column) const {
     }
 }
 
-QVariant PhotoTableModel::getDecoration(const Photo& photo, int column) const {
-    if (column == Preview) {
-        return photo.preview();
+QVariant PhotoTableModel::getDecoration(const Photo& photo, int column) const 
+{
+    if (column == Preview) 
+    {
+        QPixmap displayPixmap = photo.hasEditedVersion()
+            ? photo.editedPixmap()
+            : photo.preview();
+
+        // Ak je preview pr·zdny, naËÌtaj ho
+        if (displayPixmap.isNull()) 
+        {
+            displayPixmap = QPixmap(photo.filePath()).scaled(
+                90, 90, Qt::KeepAspectRatio, Qt::SmoothTransformation
+            );
+        }
+        else 
+        {
+            // Zmenöi editovan˝ obr·zok na veækosù preview
+            displayPixmap = displayPixmap.scaled(
+                90, 90, Qt::KeepAspectRatio, Qt::SmoothTransformation
+            );
+        }
+
+        return displayPixmap;
     }
 
     if (column == Actions) {
@@ -377,4 +398,16 @@ void PhotoTableModel::initializeWithPaths(const QStringList& allPaths)
 
     progress.close();
     endResetModel();
+}
+
+// Pridaj t˙to nov˙ metÛdu :
+Photo * PhotoTableModel::getPhotoPointer(int row) {
+    QList<Photo>& photos = getActivePhotos();
+    int realIndex = getRealIndex(row);
+
+    if (realIndex < 0 || realIndex >= photos.size()) {
+        return nullptr;
+    }
+
+    return &photos[realIndex];
 }

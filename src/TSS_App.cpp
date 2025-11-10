@@ -60,12 +60,14 @@ TSS_App::TSS_App(QWidget *parent)
         if (index.column() != PhotoTableModel::Preview) return;
         auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
         int realRow = model->currentPage() * model->pageSize() + index.row();
-        Photo photo = model->photoAt(realRow);
+        Photo* photo = model->getPhotoPointer(realRow);
+        if (!photo) return;
 
         auto dlg = new PhotoDetailDialog(this);
-        dlg->setPhoto(photo);
+        dlg->setPhoto(*photo);
         ThemeUtils::setWidgetDarkMode(dlg, m_darkMode);
         dlg->exec();
+        delete dlg;
         });
 
     // Click on Actions column --> open editor dialog
@@ -73,7 +75,8 @@ TSS_App::TSS_App(QWidget *parent)
         if (index.column() != PhotoTableModel::Actions) return;
         auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
         int realRow = model->currentPage() * model->pageSize() + index.row();
-        Photo photo = model->photoAt(realRow);
+        Photo* photo = model->getPhotoPointer(realRow);
+        if (!photo) return;
 
         auto editor = new PhotoEditorDialog(photo, this);
         ThemeUtils::setWidgetDarkMode(editor, m_darkMode);

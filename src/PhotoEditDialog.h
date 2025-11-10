@@ -26,8 +26,7 @@ class PhotoEditorDialog : public QDialog {
     Q_OBJECT
 
 public:
-    explicit PhotoEditorDialog(const Photo& photo, QWidget* parent = nullptr);
-
+    PhotoEditorDialog(Photo* photo, QWidget* parent = nullptr);
 signals:
     /**
      * @brief Emitted when photo editing is confirmed
@@ -92,6 +91,7 @@ private:
 
     // Original photo data
     Photo m_originalPhoto;
+    Photo* m_photoPtr;
     QPixmap m_originalPixmap;
     QPixmap m_editedPixmap;
 

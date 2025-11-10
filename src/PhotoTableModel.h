@@ -55,6 +55,7 @@ public:
      * @return Photo object
      */
     Photo photoAt(int row) const;
+    Photo* getPhotoPointer(int row);
 
     // Filtering
     /**

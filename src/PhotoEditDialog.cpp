@@ -28,9 +28,10 @@ namespace {
 }
 
 // Constructor
-PhotoEditorDialog::PhotoEditorDialog(const Photo& photo, QWidget* parent)
+PhotoEditorDialog::PhotoEditorDialog(Photo* photo, QWidget* parent)
     : QDialog(parent),
-    m_originalPhoto(photo),
+    m_photoPtr(photo),
+    m_originalPhoto(*photo),
     m_rotation(0),
     m_brightness(0),
     m_contrast(0),
@@ -44,7 +45,15 @@ PhotoEditorDialog::PhotoEditorDialog(const Photo& photo, QWidget* parent)
     setWindowTitle("Photo Editor");
     resize(900, 700);
 
+    /*
     m_originalPixmap = QPixmap(photo.filePath());
+    m_editedPixmap = m_originalPixmap;
+    */
+    // Naèítaj originálny alebo už editovaný obrázok
+    m_originalPixmap = photo->hasEditedVersion()
+        ? photo->editedPixmap()
+        : QPixmap(photo->filePath());
+
     m_editedPixmap = m_originalPixmap;
 
     buildUI();
@@ -485,8 +494,12 @@ void PhotoEditorDialog::displayScaledPreview()
 
 // --- Actions ---
 
-void PhotoEditorDialog::applyChanges() {
-  
+void PhotoEditorDialog::applyChanges() 
+{
+    if (m_photoPtr) {
+        m_photoPtr->setEditedPixmap(m_editedPixmap);
+    }
+    accept(); // Zavri dialóg
 }
 
 void PhotoEditorDialog::resetChanges() {

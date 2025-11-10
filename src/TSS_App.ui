@@ -146,7 +146,7 @@
       <widget class="QComboBox" name="comboPageSize">
        <property name="maximumSize">
         <size>
-         <width>70</width>
+         <width>60</width>
          <height>16777215</height>
         </size>
        </property>
@@ -190,7 +190,7 @@
        </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>250</width>
+         <width>350</width>
          <height>20</height>
         </size>
        </property>

@@ -64,9 +64,15 @@ PhotoDetailDialog::PhotoDetailDialog(QWidget* parent)
  * @brief Set the photo to display
  * @param photo Photo object
  */
-void PhotoDetailDialog::setPhoto(const Photo& photo) {
-    originalPixmap = QPixmap(photo.filePath());
+void PhotoDetailDialog::setPhoto(const Photo& photo) 
+{
+    if(photo.hasEditedVersion())
+        originalPixmap = photo.editedPixmap();
+    else
+     originalPixmap = QPixmap(photo.filePath());
+
     if (originalPixmap.isNull()) return;
+    
     currentPhoto = photo;
 }
 

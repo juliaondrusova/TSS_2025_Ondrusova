@@ -11,7 +11,7 @@ static const qint64 ONE_MB = 1024 * 1024;
  * @brief Constructs a Photo object, loads file info, and reads stored metadata.
  */
 Photo::Photo(const QString& path)
-    : m_filePath(path), m_rating(0)
+    : m_filePath(path), m_rating(0), m_hasEditedVersion(false)
 {
     if (path.isEmpty())
         return; // Default-constructed Photo (no file path)
@@ -89,4 +89,18 @@ void Photo::generatePreview(int size) {
 
     const QImage scaled = img.scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     m_preview = QPixmap::fromImage(scaled);
+}
+
+void Photo::setEditedPixmap(const QPixmap& pixmap) {
+    m_editedPixmap = pixmap;
+    m_hasEditedVersion = !pixmap.isNull();
+}
+
+void Photo::clearEditedVersion() {
+    m_editedPixmap = QPixmap();
+    m_hasEditedVersion = false;
+}
+
+QPixmap Photo::getDisplayPixmap() const {
+    return m_hasEditedVersion ? m_editedPixmap : QPixmap(m_filePath);
 }

@@ -49,6 +49,14 @@ public:
      */
     void generatePreview(int size = 90);
 
+    void setEditedPixmap(const QPixmap& pixmap);
+    QPixmap editedPixmap() const { return m_editedPixmap; }
+    bool hasEditedVersion() const { return m_hasEditedVersion; }
+    void clearEditedVersion();
+
+    // Pomocná metóda - vráti editovaný ak existuje, inak originálny
+    QPixmap getDisplayPixmap() const;
+
 private:
     QString m_filePath;   ///< Absolute path to the photo.
     QString m_tag;        ///< Optional tag (label).
@@ -58,4 +66,6 @@ private:
     qint64 m_sizeBytes;   ///< File size in bytes
     QDateTime m_dateTime; ///< Last modification date/time.
     mutable QPixmap m_preview; ///< Cached thumbnail (mutable for lazy loading).
+    QPixmap m_editedPixmap;  
+    bool m_hasEditedVersion;
 };
