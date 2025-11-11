@@ -218,6 +218,8 @@ void PhotoTableModel::applyFilters()
 		[this](const Photo& photo) { return photoPassesFilters(photo); }); // Filter photos
 
 	endResetModel(); // Notify view that changes are done
+
+	emit noPhotosAfterFilter(m_filteredPhotos.isEmpty()); // Notify if no photos match filters
 }
 
 // --- Pagination ---

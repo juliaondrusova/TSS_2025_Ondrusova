@@ -15,6 +15,13 @@
 class PhotoTableModel : public QAbstractTableModel {
     Q_OBJECT
 
+signals:
+    /**
+     * Emitted after filters are applied.
+     * @param empty true if no photos matched the filters
+     */
+    void noPhotosAfterFilter(bool empty);
+
 public:
   
     /**

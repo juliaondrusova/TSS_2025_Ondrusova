@@ -51,6 +51,16 @@ TSS_App::TSS_App(QWidget *parent)
     ui.dateFromEdit->setDate(QDate::currentDate().addMonths(-1));
     ui.dateToEdit->setDate(QDate::currentDate());
 
+	// Placeholder label for no matching photos
+    m_placeholderLabel = new QLabel(
+        "No photos match your current filters.\nTry adjusting filter settings.",
+        ui.tableView
+    );
+    m_placeholderLabel->setAlignment(Qt::AlignCenter);
+    m_placeholderLabel->resize(ui.tableView->viewport()->size());
+    m_placeholderLabel->setStyleSheet("font-size: 16px");
+    m_placeholderLabel->hide();
+
     // Connect buttons and actions
     connect(ui.btnImport, &QPushButton::clicked, this, &TSS_App::importPhotos);
     connect(ui.btnExport, &QPushButton::clicked, this, &TSS_App::exportPhotos);
@@ -71,6 +81,7 @@ TSS_App::TSS_App(QWidget *parent)
         model->clearFilters();
         ui.tagFilterEdit->clear();
         ui.ratingFilterSpin->setValue(0);
+        m_placeholderLabel->hide();
         updatePageLabel();
         });
 
@@ -135,6 +146,17 @@ TSS_App::TSS_App(QWidget *parent)
             updatePageLabel();
         }
         });
+
+    connect(model, &PhotoTableModel::noPhotosAfterFilter, this, [=](bool empty) {
+        if (empty) {
+            m_placeholderLabel->resize(ui.tableView->viewport()->size());
+            m_placeholderLabel->show();
+        }
+        else {
+            m_placeholderLabel->hide();
+        }
+        });
+
 
     updatePageLabel();
 }

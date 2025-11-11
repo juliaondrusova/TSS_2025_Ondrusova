@@ -27,4 +27,5 @@ private:
     void updatePageLabel();
     Ui::TSS_AppClass ui;
     bool m_darkMode = true;
+    QLabel* m_placeholderLabel = nullptr;
 };
