@@ -21,20 +21,19 @@ Photo::Photo(const QString& path)
     // --- File size calculation (human-readable) ---
     const qint64 sizeBytes = info.size();
     m_sizeBytes = sizeBytes;
-    if (sizeBytes < ONE_KB) {
+	if (sizeBytes < ONE_KB) { // Bytes
         m_size = QString::number(sizeBytes) + " B";
     }
-    else if (sizeBytes < ONE_MB) {
+	else if (sizeBytes < ONE_MB) { // Kilobytes
         double kb = sizeBytes / static_cast<double>(ONE_KB);
         m_size = QString::number(kb, 'f', 1) + " KB";
     }
-    else {
+	else { // Megabytes
         double mb = sizeBytes / static_cast<double>(ONE_MB);
         m_size = QString::number(mb, 'f', 1) + " MB";
     }
 
-    // Store file modification time
-    m_dateTime = info.lastModified();
+    m_dateTime = info.lastModified(); // Store file modification time
 
     // Normalize path for consistent metadata lookup
     QString normalizedPath = info.canonicalFilePath();
@@ -52,19 +51,21 @@ Photo::Photo(const QString& path)
 
 // --- Metadata-modifying setters ---
 
-void Photo::setTag(const QString& tag) {
+void Photo::setTag(const QString& tag) 
+{
     m_tag = tag;
-    PhotoMetadataManager::instance().setTag(m_filePath, tag);
+	PhotoMetadataManager::instance().setTag(m_filePath, tag); // Save to metadata manager
 }
 
-void Photo::setRating(int rating) {
+void Photo::setRating(int rating) 
+{
     m_rating = rating;
-    PhotoMetadataManager::instance().setRating(m_filePath, rating);
+	PhotoMetadataManager::instance().setRating(m_filePath, rating); // Save to metadata manager
 }
 
 void Photo::setComment(const QString& comment) {
     m_comment = comment;
-    PhotoMetadataManager::instance().setComment(m_filePath, comment);
+	PhotoMetadataManager::instance().setComment(m_filePath, comment); // Save to metadata manager
 }
 
 // --- Preview management ---
@@ -72,35 +73,39 @@ void Photo::setComment(const QString& comment) {
 /**
  * @brief Returns a cached preview image or generates one on demand.
  */
-QPixmap Photo::preview() const {
-    if (m_preview.isNull()) {
-        const_cast<Photo*>(this)->generatePreview();
-    }
+QPixmap Photo::preview() const 
+{
+    if (m_preview.isNull())
+		const_cast<Photo*>(this)->generatePreview(); // Generate preview if not already done
     return m_preview;
 }
 
 /**
  * @brief Generates a scaled thumbnail while preserving the aspect ratio.
  */
-void Photo::generatePreview(int size) {
+void Photo::generatePreview(int size) 
+{
     QImage img(m_filePath);
-    if (img.isNull())
-        return; // Skip invalid image files
+	if (img.isNull()) // Failed to load image
+        return;
 
-    const QImage scaled = img.scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    m_preview = QPixmap::fromImage(scaled);
+	const QImage scaled = img.scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation); // Scale image
+	m_preview = QPixmap::fromImage(scaled); // Store as QPixmap
 }
 
-void Photo::setEditedPixmap(const QPixmap& pixmap) {
+void Photo::setEditedPixmap(const QPixmap& pixmap) 
+{
     m_editedPixmap = pixmap;
-    m_hasEditedVersion = !pixmap.isNull();
+	m_hasEditedVersion = !pixmap.isNull(); // Mark that an edited version exists
 }
 
-void Photo::clearEditedVersion() {
+void Photo::clearEditedVersion() 
+{
     m_editedPixmap = QPixmap();
-    m_hasEditedVersion = false;
+	m_hasEditedVersion = false; // No edited version
 }
 
-QPixmap Photo::getDisplayPixmap() const {
-    return m_hasEditedVersion ? m_editedPixmap : QPixmap(m_filePath);
+QPixmap Photo::getDisplayPixmap() const 
+{
+	return m_hasEditedVersion ? m_editedPixmap : QPixmap(m_filePath); // Return edited or original
 }

@@ -56,6 +56,24 @@ TSS_App::TSS_App(QWidget *parent)
     connect(ui.btnExport, &QPushButton::clicked, this, &TSS_App::exportPhotos);
     connect(ui.btnToggleDarkMode, &QPushButton::clicked, this, &TSS_App::toggleDarkMode);
 
+    // Apply filter button
+    connect(ui.btnApplyFilter, &QPushButton::clicked, this, [=]() {
+        auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
+        model->setDateFilter(ui.dateFromEdit->date(), ui.dateToEdit->date());
+        model->setTagFilter(ui.tagFilterEdit->text());
+        model->setRatingFilter(ui.ratingFilterSpin->value());
+        updatePageLabel();
+        });
+
+    // Clear filter button
+    connect(ui.btnClearFilter, &QPushButton::clicked, this, [=]() {
+        auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
+        model->clearFilters();
+        ui.tagFilterEdit->clear();
+        ui.ratingFilterSpin->setValue(0);
+        updatePageLabel();
+        });
+
     // Double-click on preview column open detail dialog
     connect(ui.tableView, &QTableView::doubleClicked, this, [=](const QModelIndex& index) {
         if (index.column() != PhotoTableModel::Preview) return;
@@ -70,6 +88,7 @@ TSS_App::TSS_App(QWidget *parent)
         dlg->exec();
         delete dlg;
         });
+
     // Click on Actions column --> open editor dialog
     connect(ui.tableView, &QTableView::clicked, this, [=](const QModelIndex& index) {
         if (index.column() != PhotoTableModel::Actions) return;
@@ -127,23 +146,27 @@ TSS_App::TSS_App(QWidget *parent)
 TSS_App::~TSS_App() = default;
 
 
-void TSS_App::importPhotos() {
-    auto& metaManager = PhotoMetadataManager::instance();
-    metaManager.loadFromFile();
+void TSS_App::importPhotos() 
+{
+	auto& metaManager = PhotoMetadataManager::instance(); 
+	metaManager.loadFromFile(); // Load existing metadata
 
-    QString dirPath = QFileDialog::getExistingDirectory(this, "Select folder with photos");
+	QString dirPath = QFileDialog::getExistingDirectory(this, "Select folder with photos"); // Open directory selection dialog
     if (dirPath.isEmpty()) return;
 
+	// Find image files in the selected directory
     QStringList files;
     QDirIterator it(dirPath, { "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.tiff" },
         QDir::Files, QDirIterator::Subdirectories);
     while (it.hasNext()) files.append(it.next());
 
-    if (files.isEmpty()) {
+	if (files.isEmpty()) // No images found
+    {
         QMessageBox::information(this, "No images found", "This folder doesn't contain supported image files.");
         return;
     }
 
+	// Confirm import
     if (QMessageBox::question(this, "Import Photos",
         QString("Found %1 images. Import them?\n\n").arg(files.size()),
         QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes)
@@ -151,13 +174,13 @@ void TSS_App::importPhotos() {
 
     
     auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
-    QApplication::setOverrideCursor(Qt::WaitCursor);
-    model->initializeWithPaths(files);
-    QApplication::restoreOverrideCursor();
+	QApplication::setOverrideCursor(Qt::WaitCursor); // Show wait cursor during loading
+	model->initializeWithPaths(files); // Lazy load photos
+	QApplication::restoreOverrideCursor(); // Restore normal cursor
     QMessageBox::information(this, "Done",
-        QString("Initialized %1 photos. Data loaded for first page.").arg(files.size()));
+		QString("Initialized %1 photos. Data loaded for first page.").arg(files.size())); // Notify user of completion
 
-    updatePageLabel();
+	updatePageLabel(); // Update pagination label
 }
 
 /**
@@ -208,7 +231,8 @@ void TSS_App::updatePageLabel()
 /**
  * @brief Toggles between dark and light mode and applies the theme to the main window.
  */
-void TSS_App::toggleDarkMode() {
+void TSS_App::toggleDarkMode() 
+{
     m_darkMode = !m_darkMode;
-    ThemeUtils::setWidgetDarkMode(this, m_darkMode);
+	ThemeUtils::setWidgetDarkMode(this, m_darkMode); // Apply theme to main window
 }

@@ -20,10 +20,10 @@ namespace {
     constexpr int MIN_ADJUSTMENT = -100;
     constexpr int MAX_ADJUSTMENT = 100;
     constexpr int DEFAULT_ADJUSTMENT = 0;
-    constexpr int TIMER_DELAY_MS = 50;
+	constexpr int TIMER_DELAY_MS = 50; // Delay for debouncing updates
     constexpr int DEFAULT_WATERMARK_OPACITY = 70;
     constexpr int DEFAULT_WATERMARK_POSITION = 3; // Bottom Right
-    constexpr int WATERMARK_MARGIN = 20;
+	constexpr int WATERMARK_MARGIN = 20; // Margin from edges
     constexpr int PROGRESS_THRESHOLD_PIXELS = 1000000; // 1 megapixel
 }
 
@@ -36,7 +36,7 @@ PhotoEditorDialog::PhotoEditorDialog(Photo* photo, QWidget* parent)
     m_brightness(0),
     m_contrast(0),
     m_saturation(0),
-    m_cropMode(false),
+	m_cropMode(false),
     m_rubberBand(nullptr),
     m_activeFilter(0),
     m_watermarkOpacity(DEFAULT_WATERMARK_OPACITY),
@@ -45,76 +45,81 @@ PhotoEditorDialog::PhotoEditorDialog(Photo* photo, QWidget* parent)
     setWindowTitle("Photo Editor");
     resize(900, 700);
 
-    /*
-    m_originalPixmap = QPixmap(photo.filePath());
-    m_editedPixmap = m_originalPixmap;
-    */
-    // Naèítaj originálny alebo už editovaný obrázok
+	// load edited or original pixmap
     m_originalPixmap = photo->hasEditedVersion()
         ? photo->editedPixmap()
         : QPixmap(photo->filePath());
 
     m_editedPixmap = m_originalPixmap;
 
-    buildUI();
-    connectSignals();
-    updatePreview();
+	buildUI(); // Setup UI components
+	connectSignals(); // Connect signals and slots
+	updatePreview(); // Initial preview update
 }
 
 // --- UI Construction ---
 
-void PhotoEditorDialog::buildUI() {
+void PhotoEditorDialog::buildUI() 
+{
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
 
-    createPreviewArea(mainLayout);
-    createToolbar(mainLayout);
+	createPreviewArea(mainLayout); // Preview area at the top
+	createToolbar(mainLayout); // Toolbar with basic tools
 
     // Two-column layout for adjustments and filters
     QHBoxLayout* middleLayout = new QHBoxLayout();
 
+	// Left column: Adjustments
     QVBoxLayout* leftColumn = new QVBoxLayout();
     createAdjustmentPanel(leftColumn);
     middleLayout->addLayout(leftColumn);
 
+    // Right column: Filters and Watermark
     QVBoxLayout* rightColumn = new QVBoxLayout();
     createFilterPanel(rightColumn);
     createWatermarkPanel(rightColumn);
     middleLayout->addLayout(rightColumn);
 
+	// Add middle layout to main layout
     mainLayout->addLayout(middleLayout);
     createActionButtons(mainLayout);
 }
 
-void PhotoEditorDialog::createPreviewArea(QVBoxLayout* layout) {
+void PhotoEditorDialog::createPreviewArea(QVBoxLayout* layout) 
+{
     previewLabel = new QLabel(this);
     previewLabel->setAlignment(Qt::AlignCenter);
     previewLabel->setMinimumSize(600, 400);
     previewLabel->setScaledContents(false);
     previewLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    previewLabel->setMouseTracking(true);
+	previewLabel->setMouseTracking(true); // Enable mouse tracking for crop
     layout->addWidget(previewLabel);
 }
 
-void PhotoEditorDialog::createToolbar(QVBoxLayout* layout) {
+void PhotoEditorDialog::createToolbar(QVBoxLayout* layout) 
+{
     QHBoxLayout* toolbar = new QHBoxLayout();
 
     cropBtn = new QPushButton("Crop", this);
-    cropBtn->setCheckable(true);
+	cropBtn->setCheckable(true); // Toggle button for crop mode
+
     rotateLeftBtn = new QPushButton("Rotate Left", this);
     rotateRightBtn = new QPushButton("Rotate Right", this);
 
     toolbar->addWidget(cropBtn);
     toolbar->addWidget(rotateLeftBtn);
     toolbar->addWidget(rotateRightBtn);
-    toolbar->addStretch();
+	toolbar->addStretch(); // Push buttons to the left
 
     layout->addLayout(toolbar);
 }
 
-void PhotoEditorDialog::createAdjustmentPanel(QVBoxLayout* layout) {
+void PhotoEditorDialog::createAdjustmentPanel(QVBoxLayout* layout) 
+{
     QGroupBox* group = new QGroupBox("Adjustments", this);
     QVBoxLayout* groupLayout = new QVBoxLayout(group);
 
+	// sliders with spinboxes for brightness, contrast, saturation
     createSliderWithSpinbox("Brightness:", brightnessSlider, brightnessValue, groupLayout);
     createSliderWithSpinbox("Contrast:", contrastSlider, contrastValue, groupLayout);
     createSliderWithSpinbox("Saturation:", saturationSlider, saturationValue, groupLayout);
@@ -122,32 +127,33 @@ void PhotoEditorDialog::createAdjustmentPanel(QVBoxLayout* layout) {
     layout->addWidget(group);
 }
 
-void PhotoEditorDialog::createSliderWithSpinbox(const QString& label, QSlider*& slider,
-    QSpinBox*& spinbox, QVBoxLayout* layout) {
+void PhotoEditorDialog::createSliderWithSpinbox(const QString& label, QSlider*& slider, QSpinBox*& spinbox, QVBoxLayout* layout) 
+{
     QHBoxLayout* row = new QHBoxLayout();
     row->addWidget(new QLabel(label, this));
 
     slider = new QSlider(Qt::Horizontal, this);
-    slider->setRange(MIN_ADJUSTMENT, MAX_ADJUSTMENT);
-    slider->setValue(DEFAULT_ADJUSTMENT);
+	slider->setRange(MIN_ADJUSTMENT, MAX_ADJUSTMENT); // -100 to 100
+	slider->setValue(DEFAULT_ADJUSTMENT); // default 0
 
     spinbox = new QSpinBox(this);
-    spinbox->setRange(MIN_ADJUSTMENT, MAX_ADJUSTMENT);
-    spinbox->setValue(DEFAULT_ADJUSTMENT);
+	spinbox->setRange(MIN_ADJUSTMENT, MAX_ADJUSTMENT); // -100 to 100
+	spinbox->setValue(DEFAULT_ADJUSTMENT); // default 0
 
-    row->addWidget(slider, 3);
-    row->addWidget(spinbox, 1);
+	row->addWidget(slider, 3); // slider takes 3/4 of space
+	row->addWidget(spinbox, 1); // spinbox takes 1/4 of space
     layout->addLayout(row);
 }
 
-void PhotoEditorDialog::createFilterPanel(QVBoxLayout* layout) {
+void PhotoEditorDialog::createFilterPanel(QVBoxLayout* layout) 
+{
     QGroupBox* group = new QGroupBox("Filters", this);
     QHBoxLayout* groupLayout = new QHBoxLayout(group);
 
-    groupLayout->addWidget(new QLabel("Preset Filter:", this));
+	groupLayout->addWidget(new QLabel("Preset Filter:", this)); // Filter selector
 
     filterCombo = new QComboBox(this);
-    filterCombo->addItems({ "None", "Grayscale", "Sepia", "Negative", "Pastel", "Vintage" });
+	filterCombo->addItems({ "None", "Grayscale", "Sepia", "Negative", "Pastel", "Vintage" }); // Predefined filters
 
     groupLayout->addWidget(filterCombo);
     groupLayout->addStretch();
@@ -155,7 +161,8 @@ void PhotoEditorDialog::createFilterPanel(QVBoxLayout* layout) {
     layout->addWidget(group);
 }
 
-void PhotoEditorDialog::createWatermarkPanel(QVBoxLayout* layout) {
+void PhotoEditorDialog::createWatermarkPanel(QVBoxLayout* layout) 
+{
     QGroupBox* group = new QGroupBox("Watermark", this);
     QVBoxLayout* groupLayout = new QVBoxLayout(group);
 
@@ -167,8 +174,8 @@ void PhotoEditorDialog::createWatermarkPanel(QVBoxLayout* layout) {
     QHBoxLayout* posLayout = new QHBoxLayout();
     posLayout->addWidget(new QLabel("Position:", this));
     watermarkPositionCombo = new QComboBox(this);
-    watermarkPositionCombo->addItems({ "Top Left", "Top Right", "Bottom Left", "Bottom Right", "Center" });
-    watermarkPositionCombo->setCurrentIndex(DEFAULT_WATERMARK_POSITION);
+	watermarkPositionCombo->addItems({ "Top Left", "Top Right", "Bottom Left", "Bottom Right", "Center" }); // Preddefined positions
+	watermarkPositionCombo->setCurrentIndex(DEFAULT_WATERMARK_POSITION); // Default to Bottom Right
     posLayout->addWidget(watermarkPositionCombo);
     groupLayout->addLayout(posLayout);
 
@@ -178,33 +185,35 @@ void PhotoEditorDialog::createWatermarkPanel(QVBoxLayout* layout) {
 
     watermarkOpacitySlider = new QSlider(Qt::Horizontal, this);
     watermarkOpacitySlider->setRange(0, 100);
-    watermarkOpacitySlider->setValue(DEFAULT_WATERMARK_OPACITY);
+	watermarkOpacitySlider->setValue(DEFAULT_WATERMARK_OPACITY); // Default opacity
 
     QSpinBox* opacitySpin = new QSpinBox(this);
     opacitySpin->setRange(0, 100);
-    opacitySpin->setValue(DEFAULT_WATERMARK_OPACITY);
-    opacitySpin->setSuffix("%");
+	opacitySpin->setValue(DEFAULT_WATERMARK_OPACITY); // Default opacity
+	opacitySpin->setSuffix("%"); // Show percentage
 
     connect(watermarkOpacitySlider, &QSlider::valueChanged, opacitySpin, &QSpinBox::setValue);
     connect(opacitySpin, QOverload<int>::of(&QSpinBox::valueChanged),
         watermarkOpacitySlider, &QSlider::setValue);
 
-    opacityLayout->addWidget(watermarkOpacitySlider, 3);
-    opacityLayout->addWidget(opacitySpin, 1);
+	opacityLayout->addWidget(watermarkOpacitySlider, 3); // slider takes 3/4 of space
+	opacityLayout->addWidget(opacitySpin, 1); // spinbox takes 1/4 of space
     groupLayout->addLayout(opacityLayout);
 
     layout->addWidget(group);
 }
 
-void PhotoEditorDialog::createActionButtons(QVBoxLayout* layout) {
+void PhotoEditorDialog::createActionButtons(QVBoxLayout* layout) 
+{
     QHBoxLayout* buttonLayout = new QHBoxLayout();
 
+	// Action buttons: Reset, Cancel, Apply
     resetBtn = new QPushButton("Reset", this);
     cancelBtn = new QPushButton("Cancel", this);
     applyBtn = new QPushButton("Apply", this);
 
     buttonLayout->addWidget(resetBtn);
-    buttonLayout->addStretch();
+	buttonLayout->addStretch(); // Push Cancel and Apply to the right
     buttonLayout->addWidget(cancelBtn);
     buttonLayout->addWidget(applyBtn);
 
@@ -213,12 +222,13 @@ void PhotoEditorDialog::createActionButtons(QVBoxLayout* layout) {
 
 // --- Signal Connections ---
 
-void PhotoEditorDialog::connectSignals() {
+void PhotoEditorDialog::connectSignals() 
+{
     // Update timer for debouncing
     updateTimer = new QTimer(this);
     updateTimer->setSingleShot(true);
-    updateTimer->setInterval(TIMER_DELAY_MS);
-    connect(updateTimer, &QTimer::timeout, this, &PhotoEditorDialog::updatePreview);
+	updateTimer->setInterval(TIMER_DELAY_MS); // 50 ms delay
+	connect(updateTimer, &QTimer::timeout, this, &PhotoEditorDialog::updatePreview); // if no changes in 50ms, update preview
 
     // Basic tools
     connect(rotateLeftBtn, &QPushButton::clicked, this, &PhotoEditorDialog::rotateLeft);
@@ -236,8 +246,7 @@ void PhotoEditorDialog::connectSignals() {
     connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
 
     // Filter
-    connect(filterCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
-        this, &PhotoEditorDialog::applyFilter);
+    connect(filterCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &PhotoEditorDialog::applyFilter);
 
     // Watermark
     connect(watermarkBtn, &QPushButton::clicked, this, &PhotoEditorDialog::addWatermark);
@@ -252,7 +261,9 @@ void PhotoEditorDialog::connectSignals() {
         });
 }
 
-void PhotoEditorDialog::connectSliderWithSpinbox(QSlider* slider, QSpinBox* spinbox, int& value) {
+void PhotoEditorDialog::connectSliderWithSpinbox(QSlider* slider, QSpinBox* spinbox, int& value) 
+{
+	// Synchronize slider and spinbox, update value and start timer on change
     connect(slider, &QSlider::valueChanged, spinbox, &QSpinBox::setValue);
     connect(spinbox, QOverload<int>::of(&QSpinBox::valueChanged), slider, &QSlider::setValue);
     connect(slider, &QSlider::valueChanged, this, [this, &value](int newValue) {
@@ -263,12 +274,14 @@ void PhotoEditorDialog::connectSliderWithSpinbox(QSlider* slider, QSpinBox* spin
 
 // --- Basic Operations ---
 
-void PhotoEditorDialog::rotateLeft() {
-    m_rotation = (m_rotation - 90 + 360) % 360;
+void PhotoEditorDialog::rotateLeft() 
+{
+    m_rotation = (m_rotation - 90 + 360) % 360; 
     updatePreview();
 }
 
-void PhotoEditorDialog::rotateRight() {
+void PhotoEditorDialog::rotateRight() 
+{
     m_rotation = (m_rotation + 90) % 360;
     updatePreview();
 }
@@ -277,8 +290,7 @@ void PhotoEditorDialog::cropClicked(bool checked)
 {
     m_cropMode = checked;
 
-    // If crop mode is turned off and rubber band exists, hide it
-    if (!m_cropMode && m_rubberBand)
+    if (!m_cropMode && m_rubberBand) // If crop mode is turned off and rubber band exists, hide it
         m_rubberBand->hide();
 
     // Change cursor depending on crop mode
@@ -298,8 +310,7 @@ void PhotoEditorDialog::mousePressEvent(QMouseEvent* event)
         // Save the position where the user started dragging (relative to the label)
         m_cropOrigin = event->pos() - previewLabel->pos();
 
-        // Create the rubber band if it does not already exist
-        if (!m_rubberBand)
+        if (!m_rubberBand) // Create the rubber band if it does not already exist
             m_rubberBand = new QRubberBand(QRubberBand::Rectangle, previewLabel);
 
         // Initialize the rectangle (with 0 size) and make it visible
@@ -319,9 +330,8 @@ void PhotoEditorDialog::mouseMoveEvent(QMouseEvent* event)
         // Current mouse position relative to label
         QPoint currentPos = event->pos() - previewLabel->pos();
 
-        // QRect::normalized() ensures the rectangle always has positive width/height
-        QRect rect(m_cropOrigin, currentPos);
-        m_rubberBand->setGeometry(rect.normalized());
+		QRect rect(m_cropOrigin, currentPos); // Create rectangle from origin to current position
+		m_rubberBand->setGeometry(rect.normalized()); // need to normalize to handle negative widths/heights
     }
 
     // Pass event to base class
@@ -339,7 +349,7 @@ void PhotoEditorDialog::mouseReleaseEvent(QMouseEvent* event)
         // Turn off crop mode and reset cursor
         cropBtn->setChecked(false);
         m_cropMode = false;
-        previewLabel->setCursor(Qt::ArrowCursor);
+		previewLabel->setCursor(Qt::ArrowCursor); // Reset cursor
     }
 
     // Pass event to base class
@@ -353,10 +363,9 @@ void PhotoEditorDialog::applyCrop()
         return;
 
     QRect cropRect = m_rubberBand->geometry();
-    QPixmap displayedPixmap = previewLabel->pixmap(Qt::ReturnByValue);
+	QPixmap displayedPixmap = previewLabel->pixmap(Qt::ReturnByValue); // Get currently displayed pixmap
 
-    // Stop if there is no image loaded
-    if (displayedPixmap.isNull())
+    if (displayedPixmap.isNull()) // Stop if there is no image loaded
         return;
 
     QSize labelSize = previewLabel->size();
@@ -369,7 +378,7 @@ void PhotoEditorDialog::applyCrop()
     cropRect.translate(-offsetX, -offsetY);
 
     // Compute scale ratio between displayed image and original image
-    double scaleX = (double)m_editedPixmap.width() / pixmapSize.width();
+    double scaleX = (double)m_editedPixmap.width() / pixmapSize.width(); 
     double scaleY = (double)m_editedPixmap.height() / pixmapSize.height();
 
     // Convert crop rectangle to original image coordinates
@@ -391,9 +400,11 @@ void PhotoEditorDialog::applyCrop()
 
 // --- Image Processing ---
 
-void PhotoEditorDialog::updatePreview() {
-    QImage image = m_originalPixmap.toImage();
+void PhotoEditorDialog::updatePreview() 
+{
+    QImage image = m_originalPixmap.toImage(); 
 
+	// Apply all adjustments in sequence
     applyRotation(image);
     applyBrightness(image);
     applyContrast(image);
@@ -402,51 +413,53 @@ void PhotoEditorDialog::updatePreview() {
     applyWatermark(image);
 
     m_editedPixmap = QPixmap::fromImage(image);
-    displayScaledPreview();
+	displayScaledPreview(); // Show updated image in preview
 }
 
-void PhotoEditorDialog::applyRotation(QImage& image) {
+void PhotoEditorDialog::applyRotation(QImage& image) 
+{
     if (m_rotation == 0) return;
 
     QTransform transform;
-    transform.rotate(m_rotation);
-    image = image.transformed(transform, Qt::SmoothTransformation);
+	transform.rotate(m_rotation); // Rotate by the specified angle
+	image = image.transformed(transform, Qt::SmoothTransformation); 
 }
 
 void PhotoEditorDialog::applyContrast(QImage& image) 
 {
-    if (m_contrast == 0) return; // ziadna zmena
+	if (m_contrast == 0) return; // No change
 
-    // vypocet kontrastneho faktora (rovnica z Photoshop-like modelu)
-    double factor = (259 * (m_contrast + 255)) / (255.0 * (259 - m_contrast));
+	double factor = (259 * (m_contrast + 255)) / (255.0 * (259 - m_contrast)); // Contrast factor calculation, photoshop formula
 
     for (int y = 0; y < image.height(); y++) 
     {
-        QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y));
+		QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y)); // Get pointer to the start of the line
         for (int x = 0; x < image.width(); x++) 
         {
-            QColor pixelColor = QColor::fromRgb(line[x]);
+			QColor pixelColor = QColor::fromRgb(line[x]); // Get pixel color
 
+			// Apply contrast formula
             int r = std::clamp(int(factor * (pixelColor.red() - 128) + 128), 0, 255);
             int g = std::clamp(int(factor * (pixelColor.green() - 128) + 128), 0, 255);
             int b = std::clamp(int(factor * (pixelColor.blue() - 128) + 128), 0, 255);
 
-            line[x] = qRgb(r, g, b);
+			line[x] = qRgb(r, g, b); // Set new pixel color
         }
     }
 }
 
 void PhotoEditorDialog::applyBrightness(QImage& image) 
 {
-    if (m_brightness == 0) return; // ziadna zmena
+	if (m_brightness == 0) return; // No change
 
     for (int y = 0; y < image.height(); y++) 
     {
-        QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y));
+		QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y)); // Get pointer to the start of the line
         for (int x = 0; x < image.width(); x++) 
         {
-            QColor pixelColor = QColor::fromRgb(line[x]);
+			QColor pixelColor = QColor::fromRgb(line[x]); // Get pixel color
 
+			// Adjust brightness
             int r = std::clamp(pixelColor.red() + m_brightness, 0, 255);
             int g = std::clamp(pixelColor.green() + m_brightness, 0, 255);
             int b = std::clamp(pixelColor.blue() + m_brightness, 0, 255);
@@ -458,7 +471,7 @@ void PhotoEditorDialog::applyBrightness(QImage& image)
 
 void PhotoEditorDialog::applySaturation(QImage& image) 
 {
-    if (m_saturation == 0) // Ak je saturacia 0, netreba nic robit
+	if (m_saturation == 0) // No change
         return;
 
     double factor = 1.0 + (m_saturation / 100.0); // -100 --> 0.0, 0 --> 1.0, 100 --> 2.0
@@ -467,16 +480,16 @@ void PhotoEditorDialog::applySaturation(QImage& image)
     {
         for (int x = 0; x < image.width(); ++x) 
         {
-            QColor color = image.pixelColor(x, y);
+			QColor color = image.pixelColor(x, y); // Get pixel color
 
             float h, s, l;
-            color.getHslF(&h, &s, &l);
+			color.getHslF(&h, &s, &l); // Get HSL components
 
-            // uprava saturacie
+			// Adjust saturation and clamp to [0, 1]
             s = std::clamp(s * factor, 0.0, 1.0);
 
             color.setHslF(h, s, l);
-            image.setPixelColor(x, y, color);
+			image.setPixelColor(x, y, color); // Set new pixel color
         }
     }
 }
@@ -484,6 +497,7 @@ void PhotoEditorDialog::applySaturation(QImage& image)
 
 void PhotoEditorDialog::displayScaledPreview() 
 {
+	// Scale the edited pixmap to fit the preview label while maintaining aspect ratio
     QPixmap scaled = m_editedPixmap.scaled(
         previewLabel->size(),
         Qt::KeepAspectRatio,
@@ -496,13 +510,14 @@ void PhotoEditorDialog::displayScaledPreview()
 
 void PhotoEditorDialog::applyChanges() 
 {
-    if (m_photoPtr) {
-        m_photoPtr->setEditedPixmap(m_editedPixmap);
-    }
-    accept(); // Zavri dialóg
+    if (m_photoPtr)
+		m_photoPtr->setEditedPixmap(m_editedPixmap); // Save edited pixmap to photo object
+
+	accept(); // Close dialog with success
 }
 
-void PhotoEditorDialog::resetChanges() {
+void PhotoEditorDialog::resetChanges() 
+{
     // Reset all values
     m_rotation = 0;
     m_brightness = 0;
@@ -531,7 +546,7 @@ void PhotoEditorDialog::resetChanges() {
 void PhotoEditorDialog::applyFilter(int filterIndex) 
 {
     m_activeFilter = filterIndex;
-    updatePreview();
+	updatePreview(); // Update preview with new filter
 }
 
 void PhotoEditorDialog::applyActiveFilter(QImage& image) 
@@ -539,17 +554,17 @@ void PhotoEditorDialog::applyActiveFilter(QImage& image)
     if (m_activeFilter == 0) return; // None
 
     // Show progress dialog for large images
-    bool showProgress = (image.width() * image.height() > PROGRESS_THRESHOLD_PIXELS);
+	bool showProgress = (image.width() * image.height() > PROGRESS_THRESHOLD_PIXELS); // 1 megapixel
     QProgressDialog* progress = nullptr;
 
-    if (showProgress) 
+	if (showProgress) // Create progress dialog if needed
     {
         progress = new QProgressDialog("Applying filter...", "Cancel", 0, 100, this);
         progress->setWindowModality(Qt::WindowModal);
         progress->setMinimumDuration(0);
     }
 
-    switch (m_activeFilter) 
+	switch (m_activeFilter) // Apply selected filter
     {
     case 1: applyGrayscaleFilter(image, progress); break;
     case 2: applySepiaFilter(image, progress); break;
@@ -558,21 +573,23 @@ void PhotoEditorDialog::applyActiveFilter(QImage& image)
     case 5: applyVintageFilter(image, progress); break;
     }
 
-    if (progress) 
+	if (progress) // Clean up progress dialog
     {
         progress->setValue(100);
         delete progress;
     }
 }
 
-void PhotoEditorDialog::applyGrayscaleFilter(QImage& image, QProgressDialog* progress) {
-    if (image.format() != QImage::Format_RGB32 && image.format() != QImage::Format_ARGB32) 
+void PhotoEditorDialog::applyGrayscaleFilter(QImage& image, QProgressDialog* progress) 
+{
+	// Check and convert image format
+    if (image.format() != QImage::Format_RGB32 && image.format() != QImage::Format_ARGB32)
         image = image.convertToFormat(QImage::Format_RGB32);
 
     int height = image.height();
     int width = image.width();
 
-    if (progress) 
+	if (progress) // Setup progress dialog
     {
         progress->setMaximum(height);
         progress->show();
@@ -580,37 +597,36 @@ void PhotoEditorDialog::applyGrayscaleFilter(QImage& image, QProgressDialog* pro
 
     for (int y = 0; y < height; y++) 
     {
-        QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y));
+		QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y)); // Get pointer to the start of the line
         for (int x = 0; x < width; x++) 
         {
-            QColor pixelColor(line[x]);
-            int gray = static_cast<int>(0.2126 * pixelColor.red() + 0.7152 * pixelColor.green() + 0.0722 * pixelColor.blue());
-            line[x] = qRgb(gray, gray, gray);
+			QColor pixelColor(line[x]); // Get pixel color
+            int gray = static_cast<int>(0.2126 * pixelColor.red() + 0.7152 * pixelColor.green() + 0.0722 * pixelColor.blue()); // Calculate grayscale value using luminosity method
+			line[x] = qRgb(gray, gray, gray); // Set new pixel color
         }
 
-        if (progress) 
+		if (progress) // Update progress
         {
             progress->setValue(y);
-            QCoreApplication::processEvents(); // aktualizovanie dialogu
+			QCoreApplication::processEvents(); // Keep UI responsive
         }
     }
 
-    if (progress) 
-    {
+	if (progress) // Hide progress dialog
         progress->hide();
-    }
 }
 
 
 void PhotoEditorDialog::applySepiaFilter(QImage& image, QProgressDialog* progress) 
 {
+	// Check and convert image format
     if (image.format() != QImage::Format_RGB32 && image.format() != QImage::Format_ARGB32)
         image = image.convertToFormat(QImage::Format_RGB32);
    
     int height = image.height();
     int width = image.width();
 
-    if (progress) 
+	if (progress) // Setup progress dialog
     {
         progress->setMaximum(height);
         progress->show();
@@ -618,41 +634,41 @@ void PhotoEditorDialog::applySepiaFilter(QImage& image, QProgressDialog* progres
 
     for (int y = 0; y < height; y++) 
     {
-        QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y));
+		QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y)); // Get pointer to the start of the line
         for (int x = 0; x < width; x++) 
         {
-            QColor pixelColor(line[x]);
+			QColor pixelColor(line[x]); // Get pixel color
 
+			// Apply sepia formula
             int newR = static_cast<int>(0.393 * pixelColor.red() + 0.769 * pixelColor.green() + 0.189 * pixelColor.blue());
             int newG = static_cast<int>(0.349 * pixelColor.red() + 0.686 * pixelColor.green() + 0.168 * pixelColor.blue());
             int newB = static_cast<int>(0.272 * pixelColor.red() + 0.534 * pixelColor.green() + 0.131 * pixelColor.blue());
 
-            line[x] = qRgb(qMin(newR, 255), qMin(newG, 255), qMin(newB, 255));
+			line[x] = qRgb(qMin(newR, 255), qMin(newG, 255), qMin(newB, 255)); // Set new pixel color
         }
 
-        if (progress) 
+		if (progress)  // Update progress
         {
             progress->setValue(y);
             QCoreApplication::processEvents();
         }
     }
 
-    if (progress) 
-    {
+	if (progress) // Hide progress dialog
         progress->hide();
-    }
 }
 
 
 void PhotoEditorDialog::applyNegativeFilter(QImage& image, QProgressDialog* progress) 
 {
+	// Check and convert image format
     if (image.format() != QImage::Format_RGB32 && image.format() != QImage::Format_ARGB32)
         image = image.convertToFormat(QImage::Format_RGB32);
 
     int height = image.height();
     int width = image.width();
 
-    if (progress) 
+	if (progress) // Setup progress dialog
     {
         progress->setMaximum(height);
         progress->show();
@@ -660,34 +676,35 @@ void PhotoEditorDialog::applyNegativeFilter(QImage& image, QProgressDialog* prog
 
     for (int y = 0; y < height; y++) 
     {
-        QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y));
+		QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y)); // Get pointer to the start of the line
         for (int x = 0; x < width; x++) 
         {
-            QColor pixeloColor(line[x]);
-            line[x] = qRgb(255 - pixeloColor.red(), 255 - pixeloColor.green(), 255 - pixeloColor.blue());
+			QColor pixeloColor(line[x]); // Get pixel color
+			line[x] = qRgb(255 - pixeloColor.red(), 255 - pixeloColor.green(), 255 - pixeloColor.blue()); // Invert colors and set new pixel color
         }
 
-        if (progress) 
+		if (progress) // Update progress
         {
             progress->setValue(y);
             QCoreApplication::processEvents();
         }
     }
 
-    if (progress)
+	if (progress) // Hide progress dialog
         progress->hide();
 }
 
 
 void PhotoEditorDialog::applyPastelFilter(QImage& image, QProgressDialog* progress) 
 {
+	// Check and convert image format
     if (image.format() != QImage::Format_RGB32 && image.format() != QImage::Format_ARGB32)
         image = image.convertToFormat(QImage::Format_RGB32);
 
     int width = image.width();
     int height = image.height();
 
-    if (progress) 
+	if (progress) // Setup progress dialog
     {
         progress->setMaximum(height);
         progress->show();
@@ -695,31 +712,31 @@ void PhotoEditorDialog::applyPastelFilter(QImage& image, QProgressDialog* progre
 
     for (int y = 0; y < height; y++) 
     {
-        QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y));
+		QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y)); // Get pointer to the start of the line
         for (int x = 0; x < width; x++) 
         {
-            QColor pixelColor(line[x]);
+			QColor pixelColor(line[x]); // Get pixel color
 
-            // Zosvetlenie a znizenie kontrastu
+			// Lower contrast and lighten
             int r = qBound(0, static_cast<int>(pixelColor.red() * 0.8 + 60), 255);
             int g = qBound(0, static_cast<int>(pixelColor.green() * 0.8 + 60), 255);
             int b = qBound(0, static_cast<int>(pixelColor.blue() * 0.9 + 70), 255);
 
-            // Ruzovo-fialovy odtien
+			// Pink and purple tint
             r = qBound(0, r + 10, 255);
             b = qBound(0, b + 25, 255);
 
             line[x] = qRgb(r, g, b);
         }
 
-        if (progress) 
+		if (progress) // Update progress
         {
             progress->setValue(y);
             QCoreApplication::processEvents();
         }
     }
 
-    if (progress)
+	if (progress) // Hide progress dialog
         progress->hide();
 
 }
@@ -739,7 +756,7 @@ void PhotoEditorDialog::addWatermark()
         this, "Select Watermark Image", "", "Images (*.png *.jpg *.jpeg *.bmp)"
     );
 
-    if (!file.isEmpty()) 
+	if (!file.isEmpty()) // If a file was selected
     {
         m_watermarkPixmap = QPixmap(file);
 		updatePreview(); // Refresh preview to show watermark
@@ -748,7 +765,7 @@ void PhotoEditorDialog::addWatermark()
 
 void PhotoEditorDialog::applyWatermark(QImage& image) 
 {
-    if (m_watermarkPixmap.isNull()) return;
+	if (m_watermarkPixmap.isNull()) return; // No watermark to apply
 
     QPainter painter(&image);
 	painter.setOpacity(m_watermarkOpacity / 100.0); // UI slider gives 0-100, convert to 0.0-1.0
@@ -763,7 +780,7 @@ void PhotoEditorDialog::applyWatermark(QImage& image)
 
 	QPoint position = calculateWatermarkPosition(image.size(), scaledWm.size()); // Calculate position based on user selection
 	painter.drawPixmap(position, scaledWm); // Draw watermark at calculated position
-    painter.end();
+	painter.end(); // End painting
 }
 
 QPoint PhotoEditorDialog::calculateWatermarkPosition(const QSize& imageSize, const QSize& watermarkSize) 

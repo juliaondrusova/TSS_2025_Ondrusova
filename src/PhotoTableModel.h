@@ -196,7 +196,7 @@ private:
      * @param value New value
      * @return True if data was updated
      */
-    bool updatePhotoField(const Photo& photo, int column, const QVariant& value);
+    bool updatePhotoField(Photo& photo, int column, const QVariant& value);
 
     // Storage
     QList<Photo> m_allPhotos;      ///< All photos

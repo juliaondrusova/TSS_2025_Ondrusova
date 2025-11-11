@@ -11,6 +11,7 @@
 static const QChar STAR_FILLED(0x2605); 
 static const QChar STAR_EMPTY(0x2606);  
 
+// Column indices
 static const QStringList COLUMN_HEADERS = {
     "Preview", "Name", "Tag", "Rating", "Comment", "Size", "Date", "Actions"
 };
@@ -25,151 +26,153 @@ PhotoTableModel::PhotoTableModel(QObject* parent)
 
 // --- QAbstractTableModel Interface ---
 
-int PhotoTableModel::rowCount(const QModelIndex&) const {
-    const QList<Photo>& photos = getActivePhotos();
+int PhotoTableModel::rowCount(const QModelIndex&) const 
+{
+	const QList<Photo>& photos = getActivePhotos(); // Get the current list of photos (filtered or all)
     int start = m_currentPage * m_pageSize;
     int remaining = photos.size() - start;
-    return qMax(0, qMin(m_pageSize, remaining));
+    return qMax(0, qMin(m_pageSize, remaining)); 
 }
 
 int PhotoTableModel::columnCount(const QModelIndex&) const {
-    return ColumnCount;
+	return ColumnCount; // Fixed number of columns
 }
 
 QVariant PhotoTableModel::data(const QModelIndex& index, int role) const 
 {
-    if (!index.isValid())
+    if (!index.isValid()) // Check if the index is valid
         return QVariant();
 
-    const QList<Photo>& photos = getActivePhotos();
+	const QList<Photo>& photos = getActivePhotos(); // Get the current list of photos (filtered or all)
     int realIndex = getRealIndex(index.row());
 
-    if (realIndex < 0 || realIndex >= photos.size()) 
+	if (realIndex < 0 || realIndex >= photos.size()) // Check if the real index is within bounds
         return QVariant();
 
     const Photo& photo = photos[realIndex];
     int column = index.column();
 
+	// Return data based on the requested role
     switch (role) 
     {
-    case Qt::DisplayRole:
+	case Qt::DisplayRole: // Text to display
         return getDisplayText(photo, column);
 
-    case Qt::DecorationRole:
+	case Qt::DecorationRole: // Icons or images
         return getDecoration(photo, column);
 
-    case Qt::TextAlignmentRole:
+	case Qt::TextAlignmentRole: // Text alignment
         return (column == Preview || column == Actions) ? Qt::AlignCenter : QVariant();
 
-    case Qt::ToolTipRole:
+	case Qt::ToolTipRole: // Tooltip text
         return getTooltip(photo, column);
 
-    default:
+	default: // Unknown role
         return QVariant();
     }
 }
 
-QVariant PhotoTableModel::headerData(int section, Qt::Orientation orientation, int role) const {
-    if (role != Qt::DisplayRole || orientation != Qt::Horizontal) {
+QVariant PhotoTableModel::headerData(int section, Qt::Orientation orientation, int role) const 
+{
+	if (role != Qt::DisplayRole || orientation != Qt::Horizontal) // Only handle horizontal headers for display role
         return QVariant();
-    }
 
     return (section >= 0 && section < COLUMN_HEADERS.size())
-        ? COLUMN_HEADERS[section]
+		? COLUMN_HEADERS[section] // Return the header text for the column
         : QVariant();
 }
 
-Qt::ItemFlags PhotoTableModel::flags(const QModelIndex& index) const {
-    if (!index.isValid()) {
+Qt::ItemFlags PhotoTableModel::flags(const QModelIndex& index) const 
+{
+	if (!index.isValid()) // Invalid index
         return Qt::NoItemFlags;
-    }
 
-    Qt::ItemFlags flags = Qt::ItemIsSelectable | Qt::ItemIsEnabled;
+	Qt::ItemFlags flags = Qt::ItemIsSelectable | Qt::ItemIsEnabled; // selectable and enabled
 
     // Allow editing for Tag, Rating, and Comment columns
-    if (index.column() == Tag || index.column() == Rating || index.column() == Comment) {
+    if (index.column() == Tag || index.column() == Rating || index.column() == Comment)
         flags |= Qt::ItemIsEditable;
-    }
 
     return flags;
 }
 
-bool PhotoTableModel::setData(const QModelIndex& index, const QVariant& value, int role) {
-    if (!index.isValid() || role != Qt::EditRole) {
+bool PhotoTableModel::setData(const QModelIndex& index, const QVariant& value, int role) 
+{
+	if (!index.isValid() || role != Qt::EditRole) // Only handle valid indices for edit role
         return false;
-    }
 
-    QList<Photo>& photos = getActivePhotos();
+	QList<Photo>& photos = getActivePhotos(); // Get the current list of photos (filtered or all)
     int realIndex = getRealIndex(index.row());
 
-    if (realIndex < 0 || realIndex >= photos.size()) {
+    if (realIndex < 0 || realIndex >= photos.size()) //
         return false;
-    }
 
     Photo& photo = photos[realIndex];
 
-    if (updatePhotoField(photo, index.column(), value)) {
-        emit dataChanged(index, index, { Qt::DisplayRole, Qt::EditRole });
-        PhotoMetadataManager::instance().saveToFile();
+	// Update the appropriate field based on the column
+    if (updatePhotoField(photo, index.column(), value)) 
+    {
+		emit dataChanged(index, index, { Qt::DisplayRole, Qt::EditRole }); // Notify view of data change
+		PhotoMetadataManager::instance().saveToFile(); // Save metadata changes
         return true;
     }
 
     return false;
 }
 
-void PhotoTableModel::sort(int column, Qt::SortOrder order) {
-    // Get the active list of photos that needs to be sorted
-    QList<Photo>& photos = getActivePhotos();
+void PhotoTableModel::sort(int column, Qt::SortOrder order) 
+{
+    QList<Photo>& photos = getActivePhotos(); // Get the current list of photos (filtered or all)
 
-    // Determine the sorting order: ascending or descending
-    bool ascending = (order == Qt::AscendingOrder);
+	bool ascending = (order == Qt::AscendingOrder); // true for ascending, false for descending
 
     // std::sort goes through all items and sorts them based on the comparison function
     // The lambda compares two photos and returns true if the first should come before the second
     std::sort(photos.begin(), photos.end(), [column, ascending](const Photo& a, const Photo& b) {
-        switch (column) {
+        switch (column) 
+        {
         case Name:
-            return ascending ? a.filePath() < b.filePath() : a.filePath() > b.filePath();
+			return ascending ? a.filePath() < b.filePath() : a.filePath() > b.filePath(); // Sort by file path
         case Size:
-            return ascending ? a.sizeBytes() < b.sizeBytes() : a.sizeBytes() > b.sizeBytes();
+			return ascending ? a.sizeBytes() < b.sizeBytes() : a.sizeBytes() > b.sizeBytes(); // Sort by size in bytes
         case DateTime:
-            return ascending ? a.dateTime() < b.dateTime() : a.dateTime() > b.dateTime();
+			return ascending ? a.dateTime() < b.dateTime() : a.dateTime() > b.dateTime(); // Sort by date/time
         case Rating:
-            return ascending ? a.rating() < b.rating() : a.rating() > b.rating();
+            return ascending ? a.rating() < b.rating() : a.rating() > b.rating(); // Sort by rating
         default:
             return false; // Unknown column ? keep the current order
         }
         });
 
-    // Notify the table model that the order has changed so the view updates
-    emit layoutChanged();
+	emit layoutChanged(); // Notify view that the layout has changed
 }
 
 
 // --- Public Interface ---
 
-void PhotoTableModel::addPhoto(const Photo& photo) {
-    beginResetModel();
+void PhotoTableModel::addPhoto(const Photo& photo) 
+{
+	beginResetModel(); // Notify view of upcoming changes
     m_allPhotos.append(photo);
 
-    if (m_hasFilters) {
+	if (m_hasFilters) // If filters are active, re-apply them
         applyFilters();
-    }
-    else {
+	else // No filters, just clear filtered list
         m_filteredPhotos.clear();
-    }
 
-    endResetModel();
+	endResetModel(); // Notify view that changes are done
 }
 
-Photo PhotoTableModel::photoAt(int row) const {
-    const QList<Photo>& photos = getActivePhotos();
+Photo PhotoTableModel::photoAt(int row) const 
+{
+	const QList<Photo>& photos = getActivePhotos(); // Get the current list of photos (filtered or all)
     return photos.value(row);
 }
 
 // --- Filtering ---
 
-void PhotoTableModel::setRatingFilter(int minRating) {
+void PhotoTableModel::setRatingFilter(int minRating) 
+{
     m_filterMinRating = minRating;
     applyFilters();
 }
@@ -185,7 +188,9 @@ void PhotoTableModel::setDateFilter(const QDate& from, const QDate& to) {
     applyFilters();
 }
 
-void PhotoTableModel::clearFilters() {
+void PhotoTableModel::clearFilters() 
+{
+	// Reset all filter criteria
     m_filterDateFrom = QDate();
     m_filterDateTo = QDate();
     m_filterTag.clear();
@@ -194,25 +199,47 @@ void PhotoTableModel::clearFilters() {
     applyFilters();
 }
 
-void PhotoTableModel::applyFilters() {
+void PhotoTableModel::applyFilters() 
+{
+	beginResetModel(); // Notify view of upcoming changes
+    m_filteredPhotos.clear();
 
+	m_hasFilters = hasActiveFilters(); // Check if any filters are active
+
+    if (!m_hasFilters)
+    {
+        endResetModel();
+        return;
+    }
+
+    // Copy photos that pass all filters
+    std::copy_if(m_allPhotos.begin(), m_allPhotos.end(),
+        std::back_inserter(m_filteredPhotos),
+		[this](const Photo& photo) { return photoPassesFilters(photo); }); // Filter photos
+
+	endResetModel(); // Notify view that changes are done
 }
 
 // --- Pagination ---
 
-void PhotoTableModel::nextPage() {
-    const QList<Photo>& photos = getActivePhotos();
+void PhotoTableModel::nextPage() 
+{
+	const QList<Photo>& photos = getActivePhotos(); // Get the current list of photos (filtered or all)
     int total = photos.size();
     int totalPages = (total + m_pageSize - 1) / m_pageSize;
 
-    if (m_currentPage + 1 < totalPages) {
+	// Move to next page if not on the last page
+    if (m_currentPage + 1 < totalPages) 
+    {
         beginResetModel();
         ++m_currentPage;
         endResetModel();
     }
 }
 
-void PhotoTableModel::prevPage() {
+void PhotoTableModel::prevPage() 
+{
+	// Move to previous page if not on the first page
     if (m_currentPage > 0) {
         beginResetModel();
         --m_currentPage;
@@ -220,15 +247,16 @@ void PhotoTableModel::prevPage() {
     }
 }
 
-int PhotoTableModel::totalPages() const {
+int PhotoTableModel::totalPages() const 
+{
     const QList<Photo>& photos = getActivePhotos();
-    return (photos.size() + m_pageSize - 1) / m_pageSize;
+	return (photos.size() + m_pageSize - 1) / m_pageSize; // calculate total pages
 }
 
 
 void PhotoTableModel::setPageSize(int newSize)
 {
-    if (newSize <= 0 || newSize == m_pageSize)
+	if (newSize <= 0 || newSize == m_pageSize) // invalid size or no change
         return;
 
     beginResetModel();
@@ -249,11 +277,11 @@ void PhotoTableModel::firstPage()
 
 void PhotoTableModel::lastPage()
 {
-    const QList<Photo>& photos = getActivePhotos();
+	const QList<Photo>& photos = getActivePhotos(); // Get the current list of photos (filtered or all)
     int total = photos.size();
     int lastPage = (total + m_pageSize - 1) / m_pageSize - 1;
 
-    if (lastPage < 0 || m_currentPage == lastPage)
+	if (lastPage < 0 || m_currentPage == lastPage) // already on last page
         return;
 
     beginResetModel();
@@ -263,31 +291,60 @@ void PhotoTableModel::lastPage()
 
 // --- Private Helper Methods ---
 
-const QList<Photo>& PhotoTableModel::getActivePhotos() const {
-    return m_hasFilters ? m_filteredPhotos : m_allPhotos;
+const QList<Photo>& PhotoTableModel::getActivePhotos() const 
+{
+	return m_hasFilters ? m_filteredPhotos : m_allPhotos; // Return filtered or all photos based on filter state
 }
 
-QList<Photo>& PhotoTableModel::getActivePhotos() {
-    return m_hasFilters ? m_filteredPhotos : m_allPhotos;
+QList<Photo>& PhotoTableModel::getActivePhotos() 
+{
+	return m_hasFilters ? m_filteredPhotos : m_allPhotos; // Return filtered or all photos based on filter state
 }
 
-int PhotoTableModel::getRealIndex(int row) const {
-    return m_currentPage * m_pageSize + row;
+int PhotoTableModel::getRealIndex(int row) const 
+{
+    return m_currentPage * m_pageSize + row; 
 }
 
-bool PhotoTableModel::hasActiveFilters() const {
+bool PhotoTableModel::hasActiveFilters() const 
+{
+	// Check if any filter criteria are set
     return (m_filterDateFrom.isValid() && m_filterDateTo.isValid()) ||
         !m_filterTag.isEmpty() ||
         (m_filterMinRating > 0);
 }
 
-bool PhotoTableModel::photoPassesFilters(const Photo& photo) const {
+
+bool PhotoTableModel::photoPassesFilters(const Photo& photo) const 
+{
+    // Date filter
+    if (m_filterDateFrom.isValid() && m_filterDateTo.isValid()) 
+    {
+        QDate photoDate = photo.dateTime().date();
+		if (photoDate < m_filterDateFrom || photoDate > m_filterDateTo) // outside date range
+            return false;
+    }
+
+    // Tag filter (case-insensitive substring match)
+    if (!m_filterTag.isEmpty()) 
+    {
+		if (!photo.tag().contains(m_filterTag, Qt::CaseInsensitive))  // tag does not match
+            return false;
+    }
+
+    // Rating filter
+	if (m_filterMinRating > 0 && photo.rating() < m_filterMinRating) // rating too low
+        return false;
    
+
     return true;
 }
 
-QVariant PhotoTableModel::getDisplayText(const Photo& photo, int column) const {
-    switch (column) {
+
+QVariant PhotoTableModel::getDisplayText(const Photo& photo, int column) const 
+{
+    switch (column) 
+    {
     case Name:     return photo.filePath();
     case Tag:      return photo.tag();
     case Rating:   return formatRatingStars(photo.rating());
@@ -300,22 +357,23 @@ QVariant PhotoTableModel::getDisplayText(const Photo& photo, int column) const {
 
 QVariant PhotoTableModel::getDecoration(const Photo& photo, int column) const 
 {
+	// Preview column shows the photo thumbnail
     if (column == Preview) 
     {
-        QPixmap displayPixmap = photo.hasEditedVersion()
+		// Use edited version if available, otherwise use preview
+        QPixmap displayPixmap = photo.hasEditedVersion() 
             ? photo.editedPixmap()
             : photo.preview();
 
-        // Ak je preview prázdny, naèítaj ho
+		// If no preview is available, load from file
         if (displayPixmap.isNull()) 
         {
             displayPixmap = QPixmap(photo.filePath()).scaled(
                 90, 90, Qt::KeepAspectRatio, Qt::SmoothTransformation
             );
         }
-        else 
+		else  // Scale existing pixmap
         {
-            // Zmenši editovaný obrázok na ve¾kos preview
             displayPixmap = displayPixmap.scaled(
                 90, 90, Qt::KeepAspectRatio, Qt::SmoothTransformation
             );
@@ -324,7 +382,9 @@ QVariant PhotoTableModel::getDecoration(const Photo& photo, int column) const
         return displayPixmap;
     }
 
-    if (column == Actions) {
+	// Actions column shows a standard forward arrow icon
+    if (column == Actions) 
+    {
         QIcon icon = QApplication::style()->standardIcon(QStyle::SP_ArrowForward);
         return icon.pixmap(25, 25);
     }
@@ -333,8 +393,10 @@ QVariant PhotoTableModel::getDecoration(const Photo& photo, int column) const
 }
 
 
-QVariant PhotoTableModel::getTooltip(const Photo& photo, int column) const {
-    switch (column) {
+QVariant PhotoTableModel::getTooltip(const Photo& photo, int column) const 
+{
+    switch (column) 
+    {
     case Preview:  return QString("Double-click to open photo detail");
     case Name:     return photo.filePath();
     case Tag:      return photo.tag();
@@ -347,20 +409,40 @@ QVariant PhotoTableModel::getTooltip(const Photo& photo, int column) const {
     }
 }
 
-QString PhotoTableModel::formatRatingStars(int rating) const {
+QString PhotoTableModel::formatRatingStars(int rating) const 
+{
     QString stars;
     stars.reserve(5);
 
-    for (int i = 0; i < 5; ++i) {
-        stars += (i < rating) ? STAR_FILLED : STAR_EMPTY;
-    }
+    for (int i = 0; i < 5; ++i)
+		stars += (i < rating) ? STAR_FILLED : STAR_EMPTY; // filled or empty star
 
     return stars;
 }
 
-bool PhotoTableModel::updatePhotoField(const Photo& photo, int column, const QVariant& value) {
+bool PhotoTableModel::updatePhotoField(Photo& photo, int column, const QVariant& value) 
+{
     QString filePath = photo.filePath();
+
+    switch (column) 
+    {
+    case Tag:
+        photo.setTag(value.toString()); // update tag in metadata manager inside setter
+        return true;
+
+    case Rating: {
+        int rating = qBound(0, value.toInt(), 5);
+        photo.setRating(rating); // update rating in metadata manager inside setter
+        return true;
+    }
+
+    case Comment:
+		photo.setComment(value.toString()); // update comment in metadata manager inside setter
+        return true;
+
+    default:
         return false;
+    }
 }
 
 
@@ -371,27 +453,26 @@ void PhotoTableModel::initializeWithPaths(const QStringList& allPaths)
     beginResetModel();
 
     // Keep old photos, do not clear them
-    int oldSize = m_allPhotos.size();
+    int oldSize = m_allPhotos.size(); 
     m_currentPage = 0;
 
+	// Progress dialog setup
     QProgressDialog progress("Loading photos...", "Cancel", 0, allPaths.size());
     progress.setWindowModality(Qt::ApplicationModal);
     progress.setWindowTitle("Initializing Photos");
     progress.setMinimumDuration(0);
     progress.show();
 
-    // Pre-allocate memory for efficiency
-    m_allPhotos.reserve(oldSize + allPaths.size());
+	m_allPhotos.reserve(oldSize + allPaths.size());  // Pre-allocate memory for efficiency
 
     for (int i = 0; i < allPaths.size(); ++i) 
     {
-        if (progress.wasCanceled())
+	    if (progress.wasCanceled()) // User canceled loading
             break;
 
-        // Append new Photo with only the file path (no heavy data yet)
-        m_allPhotos.append(Photo(allPaths[i]));
+        m_allPhotos.append(Photo(allPaths[i]));  // Append new Photo with only the file path (no heavy data yet)
       
-       // Update progress
+        // Update progress
         progress.setValue(i + 1);
         QCoreApplication::processEvents(); // refresh GUI
     }
@@ -400,14 +481,13 @@ void PhotoTableModel::initializeWithPaths(const QStringList& allPaths)
     endResetModel();
 }
 
-// Pridaj túto novú metódu :
-Photo * PhotoTableModel::getPhotoPointer(int row) {
-    QList<Photo>& photos = getActivePhotos();
+Photo * PhotoTableModel::getPhotoPointer(int row) 
+{
+	QList<Photo>& photos = getActivePhotos(); // Get the current list of photos (filtered or all)
     int realIndex = getRealIndex(row);
 
-    if (realIndex < 0 || realIndex >= photos.size()) {
+    if (realIndex < 0 || realIndex >= photos.size())
         return nullptr;
-    }
 
     return &photos[realIndex];
 }
@@ -416,10 +496,10 @@ Photo * PhotoTableModel::getPhotoPointer(int row) {
 QList<Photo*> PhotoTableModel::getAllEditedPhotos() 
 {
     QList<Photo*> edited;
-    QList<Photo>& photos = getActivePhotos();
+	QList<Photo>& photos = getActivePhotos(); // Get the current list of photos (filtered or all)
     for (Photo& photo : photos) 
     {
-        if (photo.hasEditedVersion())
+		if (photo.hasEditedVersion()) // Only include photos with edited versions
             edited.append(&photo);
     }
     return edited;
