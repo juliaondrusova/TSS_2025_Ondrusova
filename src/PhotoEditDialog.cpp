@@ -734,22 +734,69 @@ void PhotoEditorDialog::applyVintageFilter(QImage& image, QProgressDialog* progr
 
 void PhotoEditorDialog::addWatermark() 
 {
+	// Open file dialog to select watermark image
     QString file = QFileDialog::getOpenFileName(
         this, "Select Watermark Image", "", "Images (*.png *.jpg *.jpeg *.bmp)"
     );
 
-    if (!file.isEmpty())
+    if (!file.isEmpty()) 
     {
         m_watermarkPixmap = QPixmap(file);
-        updatePreview();
+		updatePreview(); // Refresh preview to show watermark
     }
 }
 
-void PhotoEditorDialog::applyWatermark(QImage& image) {
-  
+void PhotoEditorDialog::applyWatermark(QImage& image) 
+{
+    if (m_watermarkPixmap.isNull()) return;
+
+    QPainter painter(&image);
+	painter.setOpacity(m_watermarkOpacity / 100.0); // UI slider gives 0-100, convert to 0.0-1.0
+
+    // Scale watermark to 1/4 of image width
+    int wmWidth = image.width() / 4;
+    QPixmap scaledWm = m_watermarkPixmap.scaled(
+        wmWidth, wmWidth,
+        Qt::KeepAspectRatio,
+        Qt::SmoothTransformation
+    );
+
+	QPoint position = calculateWatermarkPosition(image.size(), scaledWm.size()); // Calculate position based on user selection
+	painter.drawPixmap(position, scaledWm); // Draw watermark at calculated position
+    painter.end();
 }
 
-QPoint PhotoEditorDialog::calculateWatermarkPosition(const QSize& imageSize,const QSize& watermarkSize) {
+QPoint PhotoEditorDialog::calculateWatermarkPosition(const QSize& imageSize, const QSize& watermarkSize) 
+{
+    int x = 0, y = 0;
 
-    return QPoint();
+    switch (m_watermarkPosition) 
+    {
+    case 0: // Top Left
+        x = WATERMARK_MARGIN;
+        y = WATERMARK_MARGIN;
+        break;
+
+    case 1: // Top Right
+        x = imageSize.width() - watermarkSize.width() - WATERMARK_MARGIN;
+        y = WATERMARK_MARGIN;
+        break;
+
+    case 2: // Bottom Left
+        x = WATERMARK_MARGIN;
+        y = imageSize.height() - watermarkSize.height() - WATERMARK_MARGIN;
+        break;
+
+    case 3: // Bottom Right
+        x = imageSize.width() - watermarkSize.width() - WATERMARK_MARGIN;
+        y = imageSize.height() - watermarkSize.height() - WATERMARK_MARGIN;
+        break;
+
+    case 4: // Center
+        x = (imageSize.width() - watermarkSize.width()) / 2;
+        y = (imageSize.height() - watermarkSize.height()) / 2;
+        break;
+    }
+
+	return QPoint(x, y); // Return calculated position
 }
