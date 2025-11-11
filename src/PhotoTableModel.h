@@ -124,6 +124,8 @@ public:
     */
     void initializeWithPaths(const QStringList& allPaths);
 
+    QList<Photo*> getAllEditedPhotos();
+
 private:
     /**
      * @brief Apply current filters to photo collection

@@ -3,6 +3,7 @@
 #include "PhotoMetadata.h"
 #include "PhotoDetailDialog.h"
 #include "PhotoEditDialog.h"
+#include "PhotoExportDialog.h"
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QDirIterator>
@@ -58,24 +59,22 @@ TSS_App::TSS_App(QWidget *parent)
     // Double-click on preview column open detail dialog
     connect(ui.tableView, &QTableView::doubleClicked, this, [=](const QModelIndex& index) {
         if (index.column() != PhotoTableModel::Preview) return;
+
         auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
-        int realRow = model->currentPage() * model->pageSize() + index.row();
-        Photo* photo = model->getPhotoPointer(realRow);
+
+        Photo* photo = model->getPhotoPointer(index.row());
         if (!photo) return;
 
         auto dlg = new PhotoDetailDialog(this);
         dlg->setPhoto(*photo);
-        ThemeUtils::setWidgetDarkMode(dlg, m_darkMode);
         dlg->exec();
         delete dlg;
         });
-
     // Click on Actions column --> open editor dialog
     connect(ui.tableView, &QTableView::clicked, this, [=](const QModelIndex& index) {
         if (index.column() != PhotoTableModel::Actions) return;
         auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
-        int realRow = model->currentPage() * model->pageSize() + index.row();
-        Photo* photo = model->getPhotoPointer(realRow);
+        Photo* photo = model->getPhotoPointer(index.row());
         if (!photo) return;
 
         auto editor = new PhotoEditorDialog(photo, this);
@@ -125,7 +124,6 @@ TSS_App::TSS_App(QWidget *parent)
  * @brief Default destructor.
  */
 
-#include <QThread>
 TSS_App::~TSS_App() = default;
 
 
@@ -166,7 +164,27 @@ void TSS_App::importPhotos() {
  * @brief Exports all loaded photos to a user-selected directory with a progress dialog.
  */
 void TSS_App::exportPhotos() {
-  }
+    auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
+
+    QList<Photo*> editedPhotos = model->getAllEditedPhotos(); // returns pointers to edited photos
+	
+    // Check if there are any edited photos
+    if (editedPhotos.isEmpty()) 
+    {
+        QMessageBox::information(
+            this,
+            "No Edited Photos",
+            "There are no edited photos to export.\n\nEdit some photos first using the Actions button."
+        );
+        return;
+    }
+
+	// Open the export dialog
+    PhotoExportDialog* exportDialog = new PhotoExportDialog(editedPhotos, this);
+    exportDialog->exec();
+    delete exportDialog;
+}
+
 
 /**
  * @brief Updates the page label and enables/disables navigation buttons.

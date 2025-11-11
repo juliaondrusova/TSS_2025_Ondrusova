@@ -411,3 +411,16 @@ Photo * PhotoTableModel::getPhotoPointer(int row) {
 
     return &photos[realIndex];
 }
+
+
+QList<Photo*> PhotoTableModel::getAllEditedPhotos() 
+{
+    QList<Photo*> edited;
+    QList<Photo>& photos = getActivePhotos();
+    for (Photo& photo : photos) 
+    {
+        if (photo.hasEditedVersion())
+            edited.append(&photo);
+    }
+    return edited;
+}
