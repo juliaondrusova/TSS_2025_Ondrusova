@@ -25,7 +25,7 @@ public:
      * @param editedPhotos List of edited photo pointers.
      * @param parent Optional parent widget.
      */
-    explicit PhotoExportDialog(const QList<Photo*>& editedPhotos, QWidget* parent = nullptr);
+    explicit PhotoExportDialog(const QList<Photo*>& photosToExport, QWidget* parent = nullptr);
 
     /// Default destructor.
     ~PhotoExportDialog() = default;
@@ -62,6 +62,8 @@ private slots:
      * @param column Column index.
      */
     void onNewPathChanged(int row, int column);
+
+    void onIncludeNonEditedToggled(bool checked);
 
 private:
     /// Initializes and arranges all UI elements.
@@ -114,7 +116,7 @@ private:
     QProgressBar* m_progressBar;
 
     // --- Data ---
-    QList<Photo*> m_editedPhotos;
+    QList<Photo*> m_photosToExport;
 
     /// Table column indexes.
     enum Columns {

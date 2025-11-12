@@ -13,7 +13,7 @@ static const QChar STAR_EMPTY(0x2606);
 
 // Column indices
 static const QStringList COLUMN_HEADERS = {
-    "Preview", "Name", "Tag", "Rating", "Comment", "Size", "Date", "Actions"
+	"Preview", "Name", "Tag", "Rating", "Comment", "Size", "Date", "Actions", "Export"
 };
 
 // Constructor
@@ -63,6 +63,11 @@ QVariant PhotoTableModel::data(const QModelIndex& index, int role) const
 
 	case Qt::TextAlignmentRole: // Text alignment
         return (column == Preview || column == Actions) ? Qt::AlignCenter : QVariant();
+   
+	case Qt::CheckStateRole:  // Checkbox state
+        if (column == Export)
+            return photo.isMarkedForExport() ? Qt::Checked : Qt::Unchecked;
+        return QVariant();
 
 	case Qt::ToolTipRole: // Tooltip text
         return getTooltip(photo, column);
@@ -93,12 +98,17 @@ Qt::ItemFlags PhotoTableModel::flags(const QModelIndex& index) const
     if (index.column() == Tag || index.column() == Rating || index.column() == Comment)
         flags |= Qt::ItemIsEditable;
 
+    // Allow checking for Export column
+    if (index.column() == Export) {
+        flags |= Qt::ItemIsUserCheckable;
+    }
+
     return flags;
 }
 
 bool PhotoTableModel::setData(const QModelIndex& index, const QVariant& value, int role) 
 {
-	if (!index.isValid() || role != Qt::EditRole) // Only handle valid indices for edit role
+	if (!index.isValid()) // Invalid index
         return false;
 
 	QList<Photo>& photos = getActivePhotos(); // Get the current list of photos (filtered or all)
@@ -108,6 +118,15 @@ bool PhotoTableModel::setData(const QModelIndex& index, const QVariant& value, i
         return false;
 
     Photo& photo = photos[realIndex];
+
+    if (index.column() == Export && role == Qt::CheckStateRole) {
+        photo.setMarkedForExport(value.toInt() == Qt::Checked);
+        emit dataChanged(index, index, { Qt::CheckStateRole });
+        return true;
+    }
+
+    if (role != Qt::EditRole)
+        return false;
 
 	// Update the appropriate field based on the column
     if (updatePhotoField(photo, index.column(), value)) 
@@ -407,6 +426,7 @@ QVariant PhotoTableModel::getTooltip(const Photo& photo, int column) const
     case Size:     return photo.size();
     case DateTime: return photo.dateTime().toString("dd.MM.yyyy hh:mm");
     case Actions:  return QString("Edit photo");
+    case Export:   return QString("Check for export");
     default:       return QVariant();
     }
 }
@@ -505,4 +525,18 @@ QList<Photo*> PhotoTableModel::getAllEditedPhotos()
             edited.append(&photo);
     }
     return edited;
+}
+
+QList<Photo*> PhotoTableModel::getPhotosMarkedForExport() 
+{
+    QList<Photo*> marked;
+    QList<Photo>& photos = getActivePhotos();
+
+    for (Photo& photo : photos) 
+    {
+        if (photo.isMarkedForExport())
+            marked.append(&photo);
+    }
+
+    return marked;
 }

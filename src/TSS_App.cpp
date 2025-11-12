@@ -39,13 +39,14 @@ TSS_App::TSS_App(QWidget *parent)
 
     // Set column widths
     ui.tableView->setColumnWidth(PhotoTableModel::Preview, 110);
-    ui.tableView->setColumnWidth(PhotoTableModel::Name, 230);
+    ui.tableView->setColumnWidth(PhotoTableModel::Name, 245);
     ui.tableView->setColumnWidth(PhotoTableModel::Tag, 80);
     ui.tableView->setColumnWidth(PhotoTableModel::Rating, 100);
     ui.tableView->setColumnWidth(PhotoTableModel::Comment, 150);
     ui.tableView->setColumnWidth(PhotoTableModel::Size, 80);
     ui.tableView->setColumnWidth(PhotoTableModel::DateTime, 120);
     ui.tableView->setColumnWidth(PhotoTableModel::Actions, 90);
+    ui.tableView->setColumnWidth(PhotoTableModel::Export, 75);
 
     // Default date filters
     ui.dateFromEdit->setDate(QDate::currentDate().addMonths(-1));
@@ -211,21 +212,20 @@ void TSS_App::importPhotos()
 void TSS_App::exportPhotos() {
     auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
 
-    QList<Photo*> editedPhotos = model->getAllEditedPhotos(); // returns pointers to edited photos
-	
-    // Check if there are any edited photos
-    if (editedPhotos.isEmpty()) 
-    {
+    QList<Photo*> photosToExport = model->getPhotosMarkedForExport();
+
+    if (photosToExport.isEmpty()) {
         QMessageBox::information(
             this,
-            "No Edited Photos",
-            "There are no edited photos to export.\n\nEdit some photos first using the Actions button."
+            "No Photos Selected",
+            "No photos are marked for export.\n\n"
+            "Check the 'Export' checkbox in the table for photos you want to export."
         );
         return;
     }
 
 	// Open the export dialog
-    PhotoExportDialog* exportDialog = new PhotoExportDialog(editedPhotos, this);
+    PhotoExportDialog* exportDialog = new PhotoExportDialog(photosToExport, this);
     exportDialog->exec();
     delete exportDialog;
 }

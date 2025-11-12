@@ -53,6 +53,8 @@ public:
     QPixmap editedPixmap() const { return m_editedPixmap; }
     bool hasEditedVersion() const { return m_hasEditedVersion; }
     void clearEditedVersion();
+    void setMarkedForExport(bool marked);
+    bool isMarkedForExport() const;
 
     // Pomocná metóda - vráti editovaný ak existuje, inak originálny
     QPixmap getDisplayPixmap() const;
@@ -68,4 +70,5 @@ private:
     mutable QPixmap m_preview; ///< Cached thumbnail (mutable for lazy loading).
     QPixmap m_editedPixmap;  
     bool m_hasEditedVersion;
+    bool m_markedForExport;
 };

@@ -11,7 +11,10 @@ static const qint64 ONE_MB = 1024 * 1024;
  * @brief Constructs a Photo object, loads file info, and reads stored metadata.
  */
 Photo::Photo(const QString& path)
-    : m_filePath(path), m_rating(0), m_hasEditedVersion(false)
+    : m_filePath(path),
+      m_rating(0), 
+      m_hasEditedVersion(false), 
+      m_markedForExport(false)
 {
     if (path.isEmpty())
         return; // Default-constructed Photo (no file path)
@@ -97,13 +100,26 @@ void Photo::setEditedPixmap(const QPixmap& pixmap)
 {
     m_editedPixmap = pixmap;
 	m_hasEditedVersion = !pixmap.isNull(); // Mark that an edited version exists
+
+    if (m_hasEditedVersion)
+        m_markedForExport = true;
 }
 
 void Photo::clearEditedVersion() 
 {
     m_editedPixmap = QPixmap();
 	m_hasEditedVersion = false; // No edited version
+	m_markedForExport = false; // Clear export mark
 }
+
+void Photo::setMarkedForExport(bool marked) {
+    m_markedForExport = marked;
+}
+
+bool Photo::isMarkedForExport() const {
+    return m_markedForExport;
+}
+
 
 QPixmap Photo::getDisplayPixmap() const 
 {

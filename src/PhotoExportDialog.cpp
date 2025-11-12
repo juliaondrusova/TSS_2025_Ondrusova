@@ -11,9 +11,9 @@
 #include <QApplication>
 #include <QTimer>
 
-PhotoExportDialog::PhotoExportDialog(const QList<Photo*>& editedPhotos, QWidget* parent)
+PhotoExportDialog::PhotoExportDialog(const QList<Photo*>& photosToExport, QWidget* parent)
     : QDialog(parent),
-    m_editedPhotos(editedPhotos)
+      m_photosToExport(photosToExport)
 {
     setWindowTitle("Export Edited Photos");
     resize(1000, 600);
@@ -31,7 +31,7 @@ void PhotoExportDialog::setupUI()
     // Info label
     QLabel* infoLabel = new QLabel(
         QString("Found %1 edited photo(s). Select which to export and specify output paths.")
-        .arg(m_editedPhotos.size()), this
+        .arg(m_photosToExport.size()), this
     );
     infoLabel->setWordWrap(true);
     mainLayout->addWidget(infoLabel);
@@ -47,8 +47,8 @@ void PhotoExportDialog::setupUI()
     m_tableWidget->horizontalHeader()->setStretchLastSection(false);
     m_tableWidget->setColumnWidth(ColCheckbox, 80);
     m_tableWidget->setColumnWidth(ColPreview, 120);
-    m_tableWidget->setColumnWidth(ColOriginalPath, 280);
-    m_tableWidget->setColumnWidth(ColNewPath, 280);
+    m_tableWidget->setColumnWidth(ColOriginalPath, 290);
+    m_tableWidget->setColumnWidth(ColNewPath, 290);
     m_tableWidget->setColumnWidth(ColBrowse, 110);
     m_tableWidget->setColumnWidth(ColStatus, 80);
 
@@ -83,7 +83,7 @@ void PhotoExportDialog::setupUI()
     mainLayout->addLayout(buttonLayout);
 
     // Connect signals
-    connect(m_btnSelectAll, &QPushButton::clicked, this, &PhotoExportDialog::onSelectAllClicked);
+     connect(m_btnSelectAll, &QPushButton::clicked, this, &PhotoExportDialog::onSelectAllClicked);
     connect(m_btnDeselectAll, &QPushButton::clicked, this, &PhotoExportDialog::onDeselectAllClicked);
     connect(m_btnExport, &QPushButton::clicked, this, &PhotoExportDialog::onExportClicked);
     connect(m_btnCancel, &QPushButton::clicked, this, &PhotoExportDialog::onCancelClicked);
@@ -93,17 +93,19 @@ void PhotoExportDialog::setupUI()
 
 void PhotoExportDialog::populateTable() 
 { 
-    m_tableWidget->setRowCount(m_editedPhotos.size()); 
-	m_tableWidget->blockSignals(true); // Prevent signals during setup
+    m_tableWidget->setRowCount(m_photosToExport.size());
 
-    for (int i = 0; i < m_editedPhotos.size(); ++i)
-        createTableRow(i, m_editedPhotos[i]);
+    m_tableWidget->blockSignals(true); // Prevent signals during setup
 
-	m_tableWidget->blockSignals(false); // Re-enable signals
+    for (int i = 0; i < m_photosToExport.size(); i++)
+        createTableRow(i, m_photosToExport[i]);
 
+    m_tableWidget->blockSignals(false); // Re-enable signals
+    
     // Now update status icons for all rows (widgets/items are fully created).
-    for (int i = 0; i < m_editedPhotos.size(); ++i)
+    for (int i = 0; i < m_photosToExport.size(); i++)
         updateStatusIcon(i);
+
 }
 
 void PhotoExportDialog::createTableRow(int row, Photo* photo) 
@@ -115,13 +117,23 @@ void PhotoExportDialog::createTableRow(int row, Photo* photo)
     QHBoxLayout* checkboxLayout = new QHBoxLayout(checkboxWidget);
     checkboxLayout->addWidget(checkbox);
     checkboxLayout->setAlignment(Qt::AlignCenter);
+    checkboxLayout->setContentsMargins(0, 0, 0, 0);
     m_tableWidget->setCellWidget(row, ColCheckbox, checkboxWidget);
 
     // Column 1: Preview
     QLabel* previewLabel = new QLabel();
-    QPixmap preview = photo->editedPixmap().scaled(
-        100, 100, Qt::KeepAspectRatio, Qt::SmoothTransformation
-    );
+    QPixmap preview;
+    if (photo->hasEditedVersion()) 
+        preview = photo->editedPixmap().scaled(100, 100, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    else 
+    {
+		// Use preview or load from file
+        if (!photo->preview().isNull())
+            preview = photo->preview();    
+        else
+            preview = QPixmap(photo->filePath()).scaled(100, 100, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    }
+
     previewLabel->setPixmap(preview);
     previewLabel->setAlignment(Qt::AlignCenter);
     m_tableWidget->setCellWidget(row, ColPreview, previewLabel);
@@ -202,11 +214,16 @@ void PhotoExportDialog::onPreviewDoubleClicked(int row, int column)
 {
     if (column != ColPreview) return;
 
-    Photo* photo = m_editedPhotos[row];
+    Photo* photo = m_photosToExport[row];
     PhotoDetailDialog* dlg = new PhotoDetailDialog(this); 
 	dlg->setPhoto(*photo); // Set photo to display
 	dlg->exec();
 	delete dlg; // Clean up after closing
+}
+
+void PhotoExportDialog::onIncludeNonEditedToggled(bool checked) {
+    // Repopulate the table with new photo list
+    populateTable();
 }
 
 void PhotoExportDialog::onNewPathChanged(int row, int column) 
@@ -265,7 +282,7 @@ QList<Photo*> PhotoExportDialog::getSelectedPhotos()
         QCheckBox* checkbox = widget->findChild<QCheckBox*>();
 
 		if (checkbox && checkbox->isChecked())  // If checked, add to selected list
-            selected.append(m_editedPhotos[i]);
+            selected.append(m_photosToExport[i]);
     }
     return selected;
 }
@@ -399,6 +416,7 @@ void PhotoExportDialog::exportPhotos()
     int failedCount = 0;
     QStringList failedFiles;
 
+
 	// iterate through all rows
     for (int i = 0; i < m_tableWidget->rowCount(); i++) 
     {
@@ -408,20 +426,19 @@ void PhotoExportDialog::exportPhotos()
 		if (checkbox && checkbox->isChecked()) // check if selected
         {
             QString newPath = m_tableWidget->item(i, ColNewPath)->text();
-            Photo* photo = m_editedPhotos[i];
+            Photo* photo = m_photosToExport[i];
 
 			QApplication::processEvents(); // Keep UI responsive
 
-            QPixmap editedPixmap = photo->editedPixmap();  // Save the edited pixmap
+            // Save the pixmap (edited if available, otherwise original)
+            QPixmap pixmapToSave = photo->hasEditedVersion()
+                ? photo->editedPixmap()
+                : QPixmap(photo->filePath());
 
-			// Attempt to save the edited pixmap
-            if (editedPixmap.save(newPath))
-            {
+            if (pixmapToSave.save(newPath)) {
                 exportedCount++;
             }
-			// failed to save
-            else 
-            {
+            else {
                 failedCount++;
                 failedFiles.append(QFileInfo(newPath).fileName());
             }
@@ -458,6 +475,7 @@ void PhotoExportDialog::exportPhotos()
     m_btnCancel->setEnabled(true);
     m_btnSelectAll->setEnabled(true);
     m_btnDeselectAll->setEnabled(true);
+
 }
 
 void PhotoExportDialog::onCancelClicked() 

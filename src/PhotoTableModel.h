@@ -36,6 +36,7 @@ public:
         Size,       ///< File size
         DateTime,   ///< Last modified date/time
         Actions,    ///< Action buttons
+		Export,	    ///< Export checkbox
         ColumnCount ///< Total column count
     };
 
@@ -133,6 +134,11 @@ public:
 
     QList<Photo*> getAllEditedPhotos();
 
+    const QList<Photo>& getActivePhotos() const;
+    QList<Photo>& getActivePhotos();
+
+    QList<Photo*> getPhotosMarkedForExport();
+
 private:
     /**
      * @brief Apply current filters to photo collection
@@ -143,8 +149,6 @@ private:
      * @brief Get reference to active photo list (filtered or all)
      * @return Reference to QList<Photo>
      */
-    const QList<Photo>& getActivePhotos() const;
-    QList<Photo>& getActivePhotos();
     /**
      * @brief Convert table row to real index in photo list
      * @param row Table row number
