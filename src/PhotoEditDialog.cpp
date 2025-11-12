@@ -742,10 +742,66 @@ void PhotoEditorDialog::applyPastelFilter(QImage& image, QProgressDialog* progre
 }
 
 
-void PhotoEditorDialog::applyVintageFilter(QImage& image, QProgressDialog* progress) 
+void PhotoEditorDialog::applyVintageFilter(QImage& image, QProgressDialog* progress)
 {
+    // Check and convert image format
+    if (image.format() != QImage::Format_RGB32 && image.format() != QImage::Format_ARGB32)
+        image = image.convertToFormat(QImage::Format_RGB32);
 
+    int width = image.width();
+    int height = image.height();
+
+    if (progress) // Setup progress dialog
+    {
+        progress->setMaximum(height);
+        progress->show();
+    }
+
+    for (int y = 0; y < height; y++)
+    {
+        QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y)); // Get pointer to the start of the line
+        for (int x = 0; x < width; x++)
+        {
+            QColor pixelColor(line[x]); // Get pixel color
+
+			// Lower saturation
+            int gray = qGray(pixelColor.rgb());
+            pixelColor.setRed((pixelColor.red() + gray * 2) / 3);
+            pixelColor.setGreen((pixelColor.green() + gray * 2) / 3);
+            pixelColor.setBlue((pixelColor.blue() + gray * 2) / 3);
+
+			// Apply warm tint
+            int r = pixelColor.red();
+            int g = pixelColor.green();
+            int b = pixelColor.blue();
+
+            int newR = qBound(0, int(r * 0.9 + g * 0.5 + b * 0.2), 255);
+            int newG = qBound(0, int(r * 0.3 + g * 0.7 + b * 0.2), 255);
+            int newB = qBound(0, int(r * 0.1 + g * 0.3 + b * 0.6), 255);
+
+            pixelColor.setRed(newR);
+            pixelColor.setGreen(newG);
+            pixelColor.setBlue(newB);
+
+			// Lower contrast and lighten
+            pixelColor.setRed(qBound(0, (pixelColor.red() + 255) / 2, 255));
+            pixelColor.setGreen(qBound(0, (pixelColor.green() + 255) / 2, 255));
+            pixelColor.setBlue(qBound(0, (pixelColor.blue() + 255) / 2, 255));
+
+            line[x] = pixelColor.rgb();
+        }
+
+        if (progress) // Update progress
+        {
+            progress->setValue(y);
+            QCoreApplication::processEvents();
+        }
+    }
+
+    if (progress) // Hide progress dialog
+        progress->hide();
 }
+
 
 // --- Watermark ---
 
