@@ -51,6 +51,12 @@ TSS_App::TSS_App(QWidget *parent)
     ui.dateFromEdit->setDate(QDate::currentDate().addMonths(-1));
     ui.dateToEdit->setDate(QDate::currentDate());
 
+	// Install event filters for filter inputs
+    ui.tagFilterEdit->installEventFilter(this);
+    ui.ratingFilterSpin->installEventFilter(this);
+    ui.dateFromEdit->installEventFilter(this);
+    ui.dateToEdit->installEventFilter(this);
+
 	// Placeholder label for no matching photos
     m_placeholderLabel = new QLabel(
         "No photos match your current filters.\nTry adjusting filter settings.",
@@ -257,4 +263,32 @@ void TSS_App::toggleDarkMode()
 {
     m_darkMode = !m_darkMode;
 	ThemeUtils::setWidgetDarkMode(this, m_darkMode); // Apply theme to main window
+}
+
+
+
+bool TSS_App::eventFilter(QObject* obj, QEvent* event)
+{
+    // Check if Enter/Return was pressed in filter inputs
+    if (event->type() == QEvent::KeyPress)
+    {
+        QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+
+        //
+        if (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter)
+        {
+            // Check if the object is one of our filter inputs
+            if (obj == ui.tagFilterEdit ||
+                obj == ui.ratingFilterSpin ||
+                obj == ui.dateFromEdit ||
+                obj == ui.dateToEdit)
+            {
+                // Trigger filter application
+                ui.btnApplyFilter->click();
+                return true; // Event handled
+            }
+        }
+    }
+    // Pass event to base class
+    return QMainWindow::eventFilter(obj, event);
 }

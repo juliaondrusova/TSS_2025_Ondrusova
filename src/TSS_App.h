@@ -22,6 +22,9 @@ private slots:
     void importPhotos();
     void exportPhotos();
     void toggleDarkMode();
+    
+protected:
+	bool eventFilter(QObject* obj, QEvent* event) override; // For filter input fields
 
 private:
     void updatePageLabel();
