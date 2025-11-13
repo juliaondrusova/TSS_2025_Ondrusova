@@ -309,10 +309,15 @@ void PhotoEditorDialog::mousePressEvent(QMouseEvent* event)
     if (previewLabel->underMouse() && !m_cropMode)
     {
         m_showingOriginal = true;
-		QPixmap tempEdited = m_editedPixmap; // Store current edited pixmap
-        m_editedPixmap = QPixmap(m_originalPhoto.filePath());
-        displayScaledPreview();
-		m_editedPixmap = tempEdited;  // Restore edited pixmap
+        QPixmap originalFromFile = QPixmap(m_originalPhoto.filePath());
+
+        QPixmap scaled = originalFromFile.scaled(
+            previewLabel->size(),
+            Qt::KeepAspectRatio,
+            Qt::SmoothTransformation
+        );
+
+        previewLabel->setPixmap(scaled);
         event->accept();
         return;
     }

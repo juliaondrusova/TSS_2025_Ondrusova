@@ -399,6 +399,7 @@ void PhotoExportDialog::onExportClicked()
     exportPhotos();
 }
 
+/*
 void PhotoExportDialog::exportPhotos() 
 {
     // Disable buttons during export
@@ -477,6 +478,117 @@ void PhotoExportDialog::exportPhotos()
     m_btnDeselectAll->setEnabled(true);
 
 }
+*/
+
+void PhotoExportDialog::exportPhotos()
+{
+    // Disable buttons during export
+    m_btnExport->setEnabled(false);
+    m_btnCancel->setEnabled(false);
+    m_btnSelectAll->setEnabled(false);
+    m_btnDeselectAll->setEnabled(false);
+
+    m_progressBar->setVisible(true);
+    m_progressBar->setMaximum(m_tableWidget->rowCount());
+    m_progressBar->setValue(0);
+
+    int exportedCount = 0;
+    int failedCount = 0;
+    QStringList failedFiles;
+
+    // --- Track backups in case of overwrite ---
+    QMap<QString, QString> backupMap; // originalPath -> tempBackupPath
+
+    // --- Main export loop ---
+    for (int i = 0; i < m_tableWidget->rowCount(); ++i)
+    {
+        QWidget* widget = m_tableWidget->cellWidget(i, ColCheckbox);
+        QCheckBox* checkbox = widget ? widget->findChild<QCheckBox*>() : nullptr;
+
+        if (!checkbox || !checkbox->isChecked())
+            continue;
+
+        QString originalPath = m_tableWidget->item(i, ColOriginalPath)->text();
+        QString newPath = m_tableWidget->item(i, ColNewPath)->text();
+        Photo* photo = m_photosToExport[i];
+        QApplication::processEvents();
+
+        // --- If overwriting same file, back it up first ---
+        bool overwriting = (originalPath == newPath);
+        QString backupPath;
+
+        if (overwriting && QFile::exists(originalPath))
+        {
+            backupPath = QDir::temp().filePath(QFileInfo(originalPath).fileName() + ".bak");
+            if (QFile::copy(originalPath, backupPath))
+                backupMap.insert(originalPath, backupPath);
+        }
+
+        // --- Save edited or original pixmap ---
+        QPixmap pixmapToSave = photo->hasEditedVersion()
+            ? photo->editedPixmap()
+            : QPixmap(photo->filePath());
+
+        bool success = pixmapToSave.save(newPath);
+
+        if (success)
+        {
+            exportedCount++;
+            if (overwriting && !backupPath.isEmpty())
+                QFile::remove(backupPath); // backup no longer needed
+        }
+        else
+        {
+            failedCount++;
+            failedFiles.append(QFileInfo(newPath).fileName());
+
+            // Delete any new/failed export file
+            if (QFile::exists(newPath))
+                QFile::remove(newPath);
+
+            // Restore backup if original was overwritten
+            if (overwriting && QFile::exists(backupPath))
+            {
+                QFile::remove(originalPath); // remove broken file if partially written
+                QFile::copy(backupPath, originalPath);
+                QFile::remove(backupPath);
+            }
+        }
+
+        m_progressBar->setValue(i + 1);
+        QApplication::processEvents();
+    }
+
+    // Cleanup: remove any leftover backups
+    for (auto it = backupMap.begin(); it != backupMap.end(); ++it)
+        if (QFile::exists(it.value()))
+            QFile::remove(it.value());
+
+    m_progressBar->setVisible(false);
+
+    // --- Result message ---
+    if (failedCount == 0)
+    {
+        QMessageBox::information(this, "Export Complete",
+            QString("Successfully exported %1 photo(s)!").arg(exportedCount));
+        accept();
+    }
+    else
+    {
+        QMessageBox::warning(this, "Export Completed with Errors",
+            QString("Exported %1 photo(s).\n\nFailed to export %2 photo(s):\n%3")
+            .arg(exportedCount)
+            .arg(failedCount)
+            .arg(failedFiles.join("\n")));
+    }
+
+    // Re-enable buttons
+    m_btnExport->setEnabled(true);
+    m_btnCancel->setEnabled(true);
+    m_btnSelectAll->setEnabled(true);
+    m_btnDeselectAll->setEnabled(true);
+}
+
 
 void PhotoExportDialog::onCancelClicked() 
 {
