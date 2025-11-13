@@ -132,4 +132,6 @@ private:
     QPixmap m_watermarkPixmap;
     int m_watermarkOpacity;
     int m_watermarkPosition;
+
+    bool m_showingOriginal;
   };

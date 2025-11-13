@@ -21,7 +21,6 @@ TSS_App::TSS_App(QWidget *parent)
     ui.setupUi(this);
     ThemeUtils::setWidgetDarkMode(this, true);
 
-
     // Initialize the photo table model
     auto model = new PhotoTableModel(this);
     ui.tableView->setModel(model);
@@ -40,9 +39,9 @@ TSS_App::TSS_App(QWidget *parent)
     // Set column widths
     ui.tableView->setColumnWidth(PhotoTableModel::Preview, 110);
     ui.tableView->setColumnWidth(PhotoTableModel::Name, 245);
-    ui.tableView->setColumnWidth(PhotoTableModel::Tag, 80);
-    ui.tableView->setColumnWidth(PhotoTableModel::Rating, 100);
-    ui.tableView->setColumnWidth(PhotoTableModel::Comment, 150);
+    ui.tableView->setColumnWidth(PhotoTableModel::Tag, 75);
+    ui.tableView->setColumnWidth(PhotoTableModel::Rating, 95);
+    ui.tableView->setColumnWidth(PhotoTableModel::Comment, 160);
     ui.tableView->setColumnWidth(PhotoTableModel::Size, 80);
     ui.tableView->setColumnWidth(PhotoTableModel::DateTime, 120);
     ui.tableView->setColumnWidth(PhotoTableModel::Actions, 90);
@@ -179,7 +178,7 @@ void TSS_App::importPhotos()
 
 	// Find image files in the selected directory
     QStringList files;
-    QDirIterator it(dirPath, { "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.tiff" },
+    QDirIterator it(dirPath, { "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.tiff"},
         QDir::Files, QDirIterator::Subdirectories);
     while (it.hasNext()) files.append(it.next());
 
@@ -200,6 +199,7 @@ void TSS_App::importPhotos()
 	QApplication::setOverrideCursor(Qt::WaitCursor); // Show wait cursor during loading
 	model->initializeWithPaths(files); // Lazy load photos
 	QApplication::restoreOverrideCursor(); // Restore normal cursor
+	QCoreApplication::processEvents(QEventLoop::AllEvents, 100); // Ensure UI updates
     QMessageBox::information(this, "Done",
 		QString("Initialized %1 photos. Data loaded for first page.").arg(files.size())); // Notify user of completion
 

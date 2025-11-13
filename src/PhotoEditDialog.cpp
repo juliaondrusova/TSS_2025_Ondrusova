@@ -32,6 +32,7 @@ PhotoEditorDialog::PhotoEditorDialog(Photo* photo, QWidget* parent)
     : QDialog(parent),
     m_photoPtr(photo),
     m_originalPhoto(*photo),
+    m_showingOriginal(false),
     m_rotation(0),
     m_brightness(0),
     m_contrast(0),
@@ -304,6 +305,18 @@ void PhotoEditorDialog::cropClicked(bool checked)
 
 void PhotoEditorDialog::mousePressEvent(QMouseEvent* event)
 {
+    // Check if clicking on preview (not in crop mode)
+    if (previewLabel->underMouse() && !m_cropMode)
+    {
+        m_showingOriginal = true;
+		QPixmap tempEdited = m_editedPixmap; // Store current edited pixmap
+        m_editedPixmap = QPixmap(m_originalPhoto.filePath());
+        displayScaledPreview();
+		m_editedPixmap = tempEdited;  // Restore edited pixmap
+        event->accept();
+        return;
+    }
+
     // Only start cropping if crop mode is active and mouse is over the image
     if (m_cropMode && previewLabel->underMouse())
     {
@@ -340,6 +353,15 @@ void PhotoEditorDialog::mouseMoveEvent(QMouseEvent* event)
 
 void PhotoEditorDialog::mouseReleaseEvent(QMouseEvent* event)
 {
+    // If showing original, return to edited version
+    if (m_showingOriginal)
+    {
+        m_showingOriginal = false;
+		displayScaledPreview();  // Show edited version
+        event->accept();
+        return;
+    }
+
     // When mouse is released, apply crop if rectangle is visible
     if (m_cropMode && m_rubberBand && m_rubberBand->isVisible())
     {
