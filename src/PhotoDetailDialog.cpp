@@ -7,12 +7,7 @@
 #include <QPixmap>
 #include <QPushButton>
 
-/**
- * @brief Helper function to calculate scale factor to fit pixmap in viewport
- * @param viewportSize Size of the scroll area viewport
- * @param pixmap The image pixmap
- * @return Scale factor
- */
+// Helper function to calculate scale factor to fit a pixmap into a viewport
 static double fitScale(const QSize& viewportSize, const QPixmap& pixmap) {
     if (pixmap.isNull()) return 1.0;
     double factorW = static_cast<double>(viewportSize.width()) / pixmap.width();
@@ -26,7 +21,7 @@ PhotoDetailDialog::PhotoDetailDialog(QWidget* parent)
     setWindowTitle("Photo Detail");
     resize(600, 600);
 
-    // Main vertical layout
+    // Create main vertical layout
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
 
     // Scroll area for the image
@@ -55,17 +50,14 @@ PhotoDetailDialog::PhotoDetailDialog(QWidget* parent)
     bottomLayout->addWidget(fullscreenBtn);
     mainLayout->addLayout(bottomLayout);
 
-    // Connect signals
+    // Connect signals for zoom and fullscreen
     connect(zoomSlider, &QSlider::valueChanged, this, &PhotoDetailDialog::zoomChanged);
     connect(fullscreenBtn, &QPushButton::clicked, this, &PhotoDetailDialog::toggleFullscreen);
 }
 
-/**
- * @brief Set the photo to display
- * @param photo Photo object
- */
 void PhotoDetailDialog::setPhoto(const Photo& photo) 
 {
+    // Load either edited pixmap or original photo file
     if(photo.hasEditedVersion())
         originalPixmap = photo.editedPixmap();
     else
@@ -76,14 +68,13 @@ void PhotoDetailDialog::setPhoto(const Photo& photo)
     currentPhoto = photo;
 }
 
-/**
- * @brief Show event override
- * Fit image to viewport on first show
- */
-void PhotoDetailDialog::showEvent(QShowEvent* event) {
+
+void PhotoDetailDialog::showEvent(QShowEvent* event) 
+{
     QDialog::showEvent(event);
     if (originalPixmap.isNull()) return;
 
+    // Calculate scale to fit image in viewport
     double scale = fitScale(scrollArea->viewport()->size(), originalPixmap);
 
     // Update zoom slider without triggering slot
@@ -95,12 +86,12 @@ void PhotoDetailDialog::showEvent(QShowEvent* event) {
     zoomChanged(static_cast<int>(scale * 100));
 }
 
-/**
- * @brief Handle Ctrl + mouse wheel for zoom
- * @param event Wheel event
- */
-void PhotoDetailDialog::wheelEvent(QWheelEvent* event) {
-    if (event->modifiers() & Qt::ControlModifier) {
+
+void PhotoDetailDialog::wheelEvent(QWheelEvent* event) 
+{
+    // Ctrl + wheel changes zoom
+    if (event->modifiers() & Qt::ControlModifier) 
+    {
         int delta = event->angleDelta().y();
         int newValue = qBound(zoomSlider->minimum(),
             zoomSlider->value() + (delta > 0 ? 10 : -10),
@@ -108,21 +99,21 @@ void PhotoDetailDialog::wheelEvent(QWheelEvent* event) {
         zoomSlider->setValue(newValue);
         event->accept();
     }
-    else {
+    else
         QDialog::wheelEvent(event);
-    }
 }
 
-/**
- * @brief Toggle fullscreen mode
- */
-void PhotoDetailDialog::toggleFullscreen() {
+
+void PhotoDetailDialog::toggleFullscreen() 
+{
+    // Toggle between fullscreen and normal
     isFullscreen ? showNormal() : showFullScreen();
     fullscreenBtn->setText(isFullscreen ? "Fullscreen" : "Exit Fullscreen");
     isFullscreen = !isFullscreen;
 
     // Adjust zoom for new window size
-    if (!originalPixmap.isNull()) {
+    if (!originalPixmap.isNull()) 
+    {
         double scale = fitScale(scrollArea->viewport()->size(), originalPixmap);
         zoomSlider->blockSignals(true);
         zoomSlider->setValue(static_cast<int>(scale * 100));
@@ -131,13 +122,12 @@ void PhotoDetailDialog::toggleFullscreen() {
     }
 }
 
-/**
- * @brief Apply zoom to image based on slider value
- * @param value Zoom percentage
- */
-void PhotoDetailDialog::zoomChanged(int value) {
+
+void PhotoDetailDialog::zoomChanged(int value) 
+{
     if (originalPixmap.isNull()) return;
 
+    // Scale original pixmap according to slider value
     double scale = value / 100.0;
     QPixmap scaled = originalPixmap.scaled(
         originalPixmap.size() * scale,
@@ -145,6 +135,7 @@ void PhotoDetailDialog::zoomChanged(int value) {
         Qt::SmoothTransformation
     );
 
+    // Update image label
     imageLabel->setPixmap(scaled);
     imageLabel->resize(scaled.size());
 }

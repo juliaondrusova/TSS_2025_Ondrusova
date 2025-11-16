@@ -10,12 +10,8 @@
 #include <QProgressDialog>
 #include <QApplication>
 
-/**
- * @brief Initializes the PhotoManager main window and connects UI events.
- * @param parent Optional parent widget.
- */
 
-TSS_App::TSS_App(QWidget *parent)
+TSS_App::TSS_App(QWidget* parent)
     : QMainWindow(parent)
 {
     ui.setupUi(this);
@@ -51,13 +47,13 @@ TSS_App::TSS_App(QWidget *parent)
     ui.dateFromEdit->setDate(QDate::currentDate().addMonths(-1));
     ui.dateToEdit->setDate(QDate::currentDate());
 
-	// Install event filters for filter inputs
+    // Install event filters for filter inputs
     ui.tagFilterEdit->installEventFilter(this);
     ui.ratingFilterSpin->installEventFilter(this);
     ui.dateFromEdit->installEventFilter(this);
     ui.dateToEdit->installEventFilter(this);
 
-	// Placeholder label for no matching photos
+    // Placeholder label for no matching photos
     m_placeholderLabel = new QLabel(
         "No photos match your current filters.\nTry adjusting filter settings.",
         ui.tableView
@@ -167,54 +163,49 @@ TSS_App::TSS_App(QWidget *parent)
     updatePageLabel();
 }
 
-/**
- * @brief Default destructor.
- */
 
 TSS_App::~TSS_App() = default;
 
 
-void TSS_App::importPhotos() 
+void TSS_App::importPhotos()
 {
-	auto& metaManager = PhotoMetadataManager::instance(); 
-	metaManager.loadFromFile(); // Load existing metadata
+    auto& metaManager = PhotoMetadataManager::instance();
+    metaManager.loadFromFile(); // Load existing metadata
 
-	QString dirPath = QFileDialog::getExistingDirectory(this, "Select folder with photos"); // Open directory selection dialog
+    QString dirPath = QFileDialog::getExistingDirectory(this, "Select folder with photos"); // Open directory selection dialog
     if (dirPath.isEmpty()) return;
 
-	// Find image files in the selected directory
+    // Find image files in the selected directory
     QStringList files;
-    QDirIterator it(dirPath, { "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.tiff"},
+    QDirIterator it(dirPath, { "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.tiff" },
         QDir::Files, QDirIterator::Subdirectories);
     while (it.hasNext()) files.append(it.next());
 
-	if (files.isEmpty()) // No images found
+    if (files.isEmpty()) // No images found
     {
         QMessageBox::information(this, "No images found", "This folder doesn't contain supported image files.");
         return;
     }
 
-	// Confirm import
+    // Confirm import
     if (QMessageBox::question(this, "Import Photos",
         QString("Found %1 images. Import them?\n\n").arg(files.size()),
         QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes)
         return;
 
-    
-    auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
-	QApplication::setOverrideCursor(Qt::WaitCursor); // Show wait cursor during loading
-	model->initializeWithPaths(files); // Lazy load photos
-	QApplication::restoreOverrideCursor(); // Restore normal cursor
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 100); // Ensure UI updates
-    QMessageBox::information(this, "Done",
-		QString("Initialized %1 photos. Data loaded for first page.").arg(files.size())); // Notify user of completion
 
-	updatePageLabel(); // Update pagination label
+    auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
+    QApplication::setOverrideCursor(Qt::WaitCursor); // Show wait cursor during loading
+    model->initializeWithPaths(files); // Lazy load photos
+    QApplication::restoreOverrideCursor(); // Restore normal cursor
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 100); // Ensure UI updates
+    QMessageBox::information(this, "Done",
+        QString("Initialized %1 photos. Data loaded for first page.").arg(files.size())); // Notify user of completion
+
+    updatePageLabel(); // Update pagination label
 }
 
-/**
- * @brief Exports all loaded photos to a user-selected directory with a progress dialog.
- */
+
 void TSS_App::exportPhotos() {
     auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
 
@@ -230,17 +221,14 @@ void TSS_App::exportPhotos() {
         return;
     }
 
-	// Open the export dialog
+    // Open the export dialog
     PhotoExportDialog* exportDialog = new PhotoExportDialog(photosToExport, this);
     exportDialog->exec();
     delete exportDialog;
 }
 
 
-/**
- * @brief Updates the page label and enables/disables navigation buttons.
- */
-void TSS_App::updatePageLabel() 
+void TSS_App::updatePageLabel()
 {
     auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
     int current = model->currentPage() + 1;
@@ -256,13 +244,10 @@ void TSS_App::updatePageLabel()
     ui.btnLastPage->setEnabled(current < total);
 }
 
-/**
- * @brief Toggles between dark and light mode and applies the theme to the main window.
- */
-void TSS_App::toggleDarkMode() 
+void TSS_App::toggleDarkMode()
 {
     m_darkMode = !m_darkMode;
-	ThemeUtils::setWidgetDarkMode(this, m_darkMode); // Apply theme to main window
+    ThemeUtils::setWidgetDarkMode(this, m_darkMode); // Apply theme to main window
 }
 
 

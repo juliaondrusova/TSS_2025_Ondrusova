@@ -13,6 +13,7 @@
  * @class PhotoExportDialog
  * @brief Dialog for exporting edited photos.
  *
+ * @details
  * Displays a list of edited photos, lets the user choose export destinations,
  * validates paths, and performs export with progress tracking.
  */
@@ -21,13 +22,20 @@ class PhotoExportDialog : public QDialog {
 
 public:
     /**
-     * @brief Constructs the export dialog.
-     * @param editedPhotos List of edited photo pointers.
+     * @brief Constructs the export dialog  with a list of edited photos.
+     * @param editedPhotos List of pointers to edited Photo objects.
      * @param parent Optional parent widget.
+     * 
+     * @details The dialog will display all photos in a table with options
+     * to select/deselect for export, modify export paths, and monitor progress.
+     * 
+     * @see populateTable(), setupUI()
      */
     explicit PhotoExportDialog(const QList<Photo*>& photosToExport, QWidget* parent = nullptr);
 
-    /// Default destructor.
+    /**
+     * @brief Default destructor.
+     */
     ~PhotoExportDialog() = default;
 
 private slots:
@@ -37,16 +45,29 @@ private slots:
      */
     void onBrowseClicked(int row);
 
-    /// Selects all photos for export.
+    /**
+     * @brief Selects all photos in the table for export.
+     *
+     */
     void onSelectAllClicked();
 
-    /// Deselects all photos.
+    /**
+     * @brief Deselects all photos in the table.
+     *
+     */
     void onDeselectAllClicked();
 
-    /// Starts the export process.
+    /**
+      * @brief Starts exporting all selected photos.
+      *
+      * @details Validates all paths before export. Updates the progress bar
+      * during operation.
+      */
     void onExportClicked();
 
-    /// Cancels the operation and closes the dialog.
+    /**
+    * @brief Cancels export and closes the dialog.
+    */
     void onCancelClicked();
 
     /**
@@ -60,16 +81,29 @@ private slots:
      * @brief Called when an export path is modified in the table.
      * @param row Row index.
      * @param column Column index.
+     * @details Validates the new path and updates the status icon.
      */
     void onNewPathChanged(int row, int column);
 
+    /**
+     * @brief Toggles inclusion of non-edited photos for export.
+     * @param checked True if non-edited photos should be included.
+     */
     void onIncludeNonEditedToggled(bool checked);
 
 private:
-    /// Initializes and arranges all UI elements.
+    /**
+     * @brief Initializes and arranges all UI components.
+     *
+     * @details Creates table, buttons, progress bar, and layouts.
+     * Connects signals to corresponding slots.
+     */
     void setupUI();
 
-    /// Populates the table with photo information.
+    /**
+     * @brief Populates the table with photo information.
+     *
+     */
     void populateTable();
 
     /**
@@ -130,4 +164,4 @@ private:
     };
 };
 
-#endif // PHOTOEXPORTDIALOG_H
+#endif

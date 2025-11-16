@@ -8,7 +8,11 @@ static const qint64 ONE_KB = 1024;
 static const qint64 ONE_MB = 1024 * 1024;
 
 /**
- * @brief Constructs a Photo object, loads file info, and reads stored metadata.
+ * Constructor implementation.
+ *
+ * Loads file info, calculates human-readable size, normalizes path,
+ * and retrieves stored metadata. If the path is empty, creates an
+ * empty Photo object.
  */
 Photo::Photo(const QString& path)
     : m_filePath(path),
@@ -21,7 +25,7 @@ Photo::Photo(const QString& path)
 
     QFileInfo info(path);
 
-    // --- File size calculation (human-readable) ---
+    // File size calculation (human-readable)
     const qint64 sizeBytes = info.size();
     m_sizeBytes = sizeBytes;
 	if (sizeBytes < ONE_KB) { // Bytes
@@ -45,37 +49,19 @@ Photo::Photo(const QString& path)
 
     m_filePath = normalizedPath;
 
-    // --- Load metadata from JSON ---
+    // Load metadata from JSON
     const PhotoData data = PhotoMetadataManager::instance().getPhotoData(m_filePath);
     m_tag = data.tag;
     m_rating = data.rating;
     m_comment = data.comment;
 }
 
-// --- Metadata-modifying setters ---
 
-void Photo::setTag(const QString& tag) 
-{
-    m_tag = tag;
-	PhotoMetadataManager::instance().setTag(m_filePath, tag); // Save to metadata manager
-}
-
-void Photo::setRating(int rating) 
-{
-    m_rating = rating;
-	PhotoMetadataManager::instance().setRating(m_filePath, rating); // Save to metadata manager
-}
-
-void Photo::setComment(const QString& comment) {
-    m_comment = comment;
-	PhotoMetadataManager::instance().setComment(m_filePath, comment); // Save to metadata manager
-}
 
 // --- Preview management ---
 
-/**
- * @brief Returns a cached preview image or generates one on demand.
- */
+
+/** Returns the cached preview, generates it on demand if missing. */
 QPixmap Photo::preview() const 
 {
     if (m_preview.isNull())
@@ -83,9 +69,7 @@ QPixmap Photo::preview() const
     return m_preview;
 }
 
-/**
- * @brief Generates a scaled thumbnail while preserving the aspect ratio.
- */
+/** Generates a scaled thumbnail while keeping the aspect ratio. */
 void Photo::generatePreview(int size) 
 {
     QImage img(m_filePath);
@@ -96,6 +80,7 @@ void Photo::generatePreview(int size)
 	m_preview = QPixmap::fromImage(scaled); // Store as QPixmap
 }
 
+/** Sets a custom edited version of the photo and marks it for export. */
 void Photo::setEditedPixmap(const QPixmap& pixmap) 
 {
     m_editedPixmap = pixmap;
@@ -105,23 +90,10 @@ void Photo::setEditedPixmap(const QPixmap& pixmap)
         m_markedForExport = true;
 }
 
+/** Clears any edited version and resets export flag. */
 void Photo::clearEditedVersion() 
 {
     m_editedPixmap = QPixmap();
 	m_hasEditedVersion = false; // No edited version
 	m_markedForExport = false; // Clear export mark
-}
-
-void Photo::setMarkedForExport(bool marked) {
-    m_markedForExport = marked;
-}
-
-bool Photo::isMarkedForExport() const {
-    return m_markedForExport;
-}
-
-
-QPixmap Photo::getDisplayPixmap() const 
-{
-	return m_hasEditedVersion ? m_editedPixmap : QPixmap(m_filePath); // Return edited or original
 }

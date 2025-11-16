@@ -5,6 +5,7 @@
 /**
  * @brief Table model for displaying photos with pagination, filtering, and sorting
  *
+ * @details
  * This model manages photo display in a table view with support for:
  * - Pagination (default 10 items per page)
  * - Filtering by date range, tag, and minimum rating
@@ -40,9 +41,13 @@ public:
         ColumnCount ///< Total column count
     };
 
+    /**
+     * @brief Constructs an empty photo table model.
+     * @param parent Optional parent object.
+     */
     explicit PhotoTableModel(QObject* parent = nullptr);
 
-    // QAbstractTableModel interface
+    // --- QAbstractTableModel interface ---
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     int columnCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role) const override;
@@ -60,12 +65,18 @@ public:
     /**
      * @brief Get photo at specific row (relative to current page)
      * @param row Row index within current page
-     * @return Photo object
+     * @return Copy of the requested Photo
      */
     Photo photoAt(int row) const;
+
+    /**
+     * @brief Returns pointer to photo at selected row (current page).
+     * @param row Row index relative to current page.
+     * @return Pointer to Photo in internal storage.
+     */
     Photo* getPhotoPointer(int row);
 
-    // Filtering
+    // --- Filtering ---
     /**
      * @brief Filter photos by date range
      * @param from Start date (inclusive)
@@ -90,14 +101,14 @@ public:
      */
     void clearFilters();
 
-    // Pagination
+    // --- Pagination --- 
     /**
-     * @brief Move to next page
+     * @brief Move to next page, if available
      */
     void nextPage();
 
     /**
-     * @brief Move to previous page
+     * @brief Move to previous page, if available
      */
     void prevPage();
 
@@ -114,9 +125,20 @@ public:
     int pageSize() const { return m_pageSize; }
 
 
-
+    /**
+    * @brief Moves to the first page.
+    */
     void firstPage();
+
+    /**
+     * @brief Moves to the last available page.
+     */
     void lastPage();
+
+    /**
+    * @brief Sets number of items displayed per page.
+    * @param newSize New page size.
+    */
     void setPageSize(int newSize);
 
 
@@ -128,27 +150,38 @@ public:
 
     /**
     * @brief Initialize the model with a list of photo paths.
-    * @param allPaths List of photo file paths to add to the model.
+    * @param allPaths List of absolute file paths.
     */
     void initializeWithPaths(const QStringList& allPaths);
 
+    /**
+     * @brief Returns all photos that were edited.
+     * @return List of pointers to edited photos.
+     */
     QList<Photo*> getAllEditedPhotos();
 
+    /**
+     * @brief Access active (filtered or unfiltered) photos.
+     * @return Const reference to active photo list.
+     */
     const QList<Photo>& getActivePhotos() const;
+
     QList<Photo>& getActivePhotos();
 
+    /**
+    * @brief Retrieves photos marked for export.
+    * @return List of Photo pointers selected for export.
+    */
     QList<Photo*> getPhotosMarkedForExport();
 
 private:
-    /**
-     * @brief Apply current filters to photo collection
-     */
-    void applyFilters();
+    // --- Internal filtering helpers ---
 
     /**
-     * @brief Get reference to active photo list (filtered or all)
-     * @return Reference to QList<Photo>
-     */
+    * @brief Apply current filters to photo collection
+    */
+    void applyFilters();
+
     /**
      * @brief Convert table row to real index in photo list
      * @param row Table row number
@@ -169,56 +202,57 @@ private:
      */
     bool photoPassesFilters(const Photo& photo) const;
 
+    // --- Data formatting for table view ---
     /**
-     * @brief Get display text for a cell
-     * @param photo Photo object
+     * @brief eturns text data for a column
+     * @param photo Photo being displayed
      * @param column Column index
-     * @return Display text
+     * @return Display string
      */
     QVariant getDisplayText(const Photo& photo, int column) const;
 
     /**
      * @brief Get decoration (icon/image) for a cell
-     * @param photo Photo object
+     * @param photo Photo being displayed.
      * @param column Column index
-     * @return Decoration data
+     * @return QVariant containing decoration data
      */
     QVariant getDecoration(const Photo& photo, int column) const;
 
     /**
-      * @brief Get tooltip text for a cell
-      * @param photo Photo object
-      * @param column Column index
-      * @return Tooltip text
-      */
+     * @brief Get tooltip text for a cell
+     * @param photo Photo being displayed
+     * @param column Column index
+     * @return Tooltip string
+     */
     QVariant getTooltip(const Photo& photo, int column) const;
 
     /**
     * @brief Format rating as star characters
     * @param rating Rating value (0-5)
-    * @return String with filled and empty stars
+    * @return Unicode star representation
     */
     QString formatRatingStars(int rating) const;
 
     /**
-     * @brief Update photo data for a specific column
-     * @param photo Photo to update
-     * @param column Column being edited
-     * @param value New value
-     * @return True if data was updated
+     * @brief Updates a specific field on a Photo object.
+     * @param photo Target photo.
+     * @param column Column being modified.
+     * @param value Replacement value.
+     * @return True if the field was updated.
      */
     bool updatePhotoField(Photo& photo, int column, const QVariant& value);
 
-    // Storage
-    QList<Photo> m_allPhotos;      ///< All photos
-    QList<Photo> m_filteredPhotos; ///< Filtered photos
-    bool m_hasFilters;             ///< True if filters are active
+    // --- Storage ---
+    QList<Photo> m_allPhotos;      ///< Full original photo list
+    QList<Photo> m_filteredPhotos; ///< Filtered photos (if filters active)
+    bool m_hasFilters;             ///< Indicates if filtered mode is active
 
-    // Pagination
+    // --- Pagination ---
     int m_pageSize = 10;     ///< Items per page
     int m_currentPage = 0;   ///< Current page (0-based)
 
-    // Filter conditions
+    // --- Filter conditions ---
     QDate m_filterDateFrom;    ///< Filter: start date
     QDate m_filterDateTo;      ///< Filter: end date
     QString m_filterTag;       ///< Filter: tag substring

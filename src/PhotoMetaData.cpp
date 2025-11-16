@@ -55,10 +55,7 @@ PhotoMetadataManager::~PhotoMetadataManager()
 	saveToFile(); // Save metadata at destruction
 }
 
-/**
- * @brief Default location for metadata storage.
- * Uses platform-specific AppData folder.
- */
+
 QString PhotoMetadataManager::defaultFilePath() const 
 {
 	const QString basePath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation); // e.g., %APPDATA%/PhotoManager on Windows
@@ -66,9 +63,6 @@ QString PhotoMetadataManager::defaultFilePath() const
     return basePath + "/photo_metadata.json";
 }
 
-/**
- * @brief Load all photo metadata from disk.
- */
 bool PhotoMetadataManager::loadFromFile(const QString& filePath) 
 {
     const QString path = filePath.isEmpty() ? defaultFilePath() : filePath;
@@ -96,9 +90,7 @@ bool PhotoMetadataManager::loadFromFile(const QString& filePath)
     return true;
 }
 
-/**
- * @brief Save all photo metadata to JSON file.
- */
+
 bool PhotoMetadataManager::saveToFile(const QString& filePath) 
 {
     QString path = filePath.isEmpty() ? m_currentFilePath : filePath;
@@ -153,9 +145,6 @@ void PhotoMetadataManager::setComment(const QString& filePath, const QString& co
     m_metadata[key] = data;
 }
 
-/**
- * @brief Removes entries for photos that no longer exist on disk.
- */
 void PhotoMetadataManager::cleanupNonExistentFiles() 
 {
 	for (auto it = m_metadata.begin(); it != m_metadata.end();) // Iterate through metadata entries

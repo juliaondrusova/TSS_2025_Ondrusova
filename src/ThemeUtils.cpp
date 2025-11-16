@@ -1,4 +1,3 @@
-// ThemeUtils.cpp
 #include "ThemeUtils.h"
 #include <QLabel>
 #include <QGroupBox>
@@ -16,7 +15,8 @@ namespace ThemeUtils {
 
         QColor textColor = darkMode ? Qt::white : Qt::black;
 
-        if (darkMode) {
+        if (darkMode) 
+        {
             // Dark modern theme with red accent
             widget->setStyleSheet(R"(
                 QMainWindow, QDialog {
@@ -418,4 +418,4 @@ namespace ThemeUtils {
 
         }
     }
-} // namespace ThemeUtils
+} 

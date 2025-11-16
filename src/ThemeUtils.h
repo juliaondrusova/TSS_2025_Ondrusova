@@ -13,4 +13,4 @@ namespace ThemeUtils {
 	 */
 	void setWidgetDarkMode(QWidget* widget, bool darkMode);
 
-} // namespace ThemeUtils
+}
