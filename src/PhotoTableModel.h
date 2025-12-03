@@ -174,6 +174,29 @@ public:
     */
     QList<Photo*> getPhotosMarkedForExport();
 
+
+    /**
+     * @brief Load saved settings (page size, sorting, filters)
+     */
+    void loadSettings();
+
+    /**
+     * @brief Save current settings (page size, sorting, filters)
+     */
+    void saveSettings();
+
+    /**
+     * @brief Get current sort column
+     * @return Column index being sorted by
+     */
+    int currentSortColumn() const { return m_sortColumn; }
+
+    /**
+     * @brief Get current sort order
+     * @return Qt::AscendingOrder or Qt::DescendingOrder
+     */
+    Qt::SortOrder currentSortOrder() const { return m_sortOrder; }
+
 private:
     // --- Internal filtering helpers ---
 
@@ -257,4 +280,8 @@ private:
     QDate m_filterDateTo;      ///< Filter: end date
     QString m_filterTag;       ///< Filter: tag substring
     int m_filterMinRating;     ///< Filter: minimum rating
+
+	// --- Sorting ---
+    int m_sortColumn = DateTime;              ///< Current sort column
+    Qt::SortOrder m_sortOrder = Qt::DescendingOrder; ///< Current sort order
 };

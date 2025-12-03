@@ -6,6 +6,7 @@
 #include <QProgressDialog>
 #include <QCoreApplication>
 #include <QElapsedTimer>
+#include <QSettings>
 
 // Constants
 static const QChar STAR_FILLED(0x2605); 
@@ -141,6 +142,9 @@ bool PhotoTableModel::setData(const QModelIndex& index, const QVariant& value, i
 
 void PhotoTableModel::sort(int column, Qt::SortOrder order) 
 {
+    m_sortColumn = column;
+    m_sortOrder = order;
+
     QList<Photo>& photos = getActivePhotos(); // Get the current list of photos (filtered or all)
 
 	bool ascending = (order == Qt::AscendingOrder); // true for ascending, false for descending
@@ -499,6 +503,10 @@ void PhotoTableModel::initializeWithPaths(const QStringList& allPaths)
         QCoreApplication::processEvents(); // refresh GUI
     }
 
+    if (hasActiveFilters()) {
+        applyFilters();
+    }
+
     progress.close();
     endResetModel();
 }
@@ -539,4 +547,72 @@ QList<Photo*> PhotoTableModel::getPhotosMarkedForExport()
     }
 
     return marked;
+}
+
+
+// --- Settings Persistence ---
+void PhotoTableModel::loadSettings()
+{
+    QSettings settings("TssApp", "PhotoViewer");
+
+	// load page size
+    int savedPageSize = settings.value("table/pageSize", 10).toInt();
+    if (savedPageSize > 0) {
+        setPageSize(savedPageSize);
+    }
+
+	// load sorting
+    m_sortColumn = settings.value("table/sortColumn", DateTime).toInt();
+    m_sortOrder = static_cast<Qt::SortOrder>(
+        settings.value("table/sortOrder", Qt::DescendingOrder).toInt()
+        );
+
+	// Apply sorting
+    if (!m_allPhotos.isEmpty()) {
+        sort(m_sortColumn, m_sortOrder);
+    }
+
+	// load filters
+    bool hasDateFilter = settings.value("filters/hasDateFilter", false).toBool();
+    if (hasDateFilter) 
+    {
+        QDate from = settings.value("filters/dateFrom").toDate();
+        QDate to = settings.value("filters/dateTo").toDate();
+        if (from.isValid() && to.isValid())
+        {
+            setDateFilter(from, to);
+        }
+    }
+	// Load tag filter
+    QString savedTag = settings.value("filters/tag", "").toString();
+    if (!savedTag.isEmpty()) {
+        setTagFilter(savedTag);
+    }
+
+	// Load minimum rating filter
+    int savedMinRating = settings.value("filters/minRating", 0).toInt();
+    if (savedMinRating > 0) {
+        setRatingFilter(savedMinRating);
+    }
+}
+
+// Save current settings
+void PhotoTableModel::saveSettings()
+{
+    QSettings settings("TssApp", "PhotoViewer");
+
+	// save page size
+    settings.setValue("table/pageSize", m_pageSize);
+
+	// save sorting
+    settings.setValue("table/sortColumn", m_sortColumn);
+    settings.setValue("table/sortOrder", static_cast<int>(m_sortOrder));
+
+	// save filters
+    settings.setValue("filters/hasDateFilter",
+        m_filterDateFrom.isValid() && m_filterDateTo.isValid());
+    settings.setValue("filters/dateFrom", m_filterDateFrom);
+    settings.setValue("filters/dateTo", m_filterDateTo);
+    settings.setValue("filters/tag", m_filterTag);
+    settings.setValue("filters/minRating", m_filterMinRating);
 }

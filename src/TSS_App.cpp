@@ -9,7 +9,7 @@
 #include <QDirIterator>
 #include <QProgressDialog>
 #include <QApplication>
-
+#include <QSettings>
 
 TSS_App::TSS_App(QWidget* parent)
     : QMainWindow(parent)
@@ -29,8 +29,7 @@ TSS_App::TSS_App(QWidget* parent)
     ui.tableView->setSortingEnabled(true);
     ui.tableView->horizontalHeader()->setSortIndicatorShown(true);
     ui.tableView->horizontalHeader()->setSectionsClickable(true);
-    ui.tableView->sortByColumn(PhotoTableModel::DateTime, Qt::AscendingOrder);
-
+    ui.tableView->sortByColumn(PhotoTableModel::DateTime, Qt::DescendingOrder);
 
     // Set column widths
     ui.tableView->setColumnWidth(PhotoTableModel::Preview, 110);
@@ -83,6 +82,9 @@ TSS_App::TSS_App(QWidget* parent)
         model->clearFilters();
         ui.tagFilterEdit->clear();
         ui.ratingFilterSpin->setValue(0);
+        ui.dateFromEdit->setDate(QDate::currentDate().addMonths(-1));
+        ui.dateToEdit->setDate(QDate::currentDate());
+        ui.tableView->sortByColumn(PhotoTableModel::DateTime, Qt::DescendingOrder);
         m_placeholderLabel->hide();
         updatePageLabel();
         });
@@ -159,21 +161,119 @@ TSS_App::TSS_App(QWidget* parent)
         }
         });
 
-
+    loadSettings();
     updatePageLabel();
 }
 
 
-TSS_App::~TSS_App() = default;
+TSS_App::~TSS_App() {
+    saveSettings();
+}
 
+// --- Settings Persistence ---
+void TSS_App::loadSettings()
+{
+    QSettings settings("TssApp", "PhotoViewer");
+
+	// Load geometry and state
+    restoreGeometry(settings.value("mainWindow/geometry").toByteArray());
+    restoreState(settings.value("mainWindow/state").toByteArray());
+
+	// Load dark mode
+    m_darkMode = settings.value("ui/darkMode", true).toBool();
+    ThemeUtils::setWidgetDarkMode(this, m_darkMode);
+
+	// Load column widths
+    for (int col = 0; col < PhotoTableModel::ColumnCount; ++col) 
+    {
+        QString key = QString("table/columnWidth_%1").arg(col);
+        if (settings.contains(key)) 
+        {
+            int width = settings.value(key).toInt();
+            ui.tableView->setColumnWidth(col, width);
+        }
+    }
+
+	// Load page size
+    int savedPageSize = settings.value("table/pageSize", 10).toInt();
+    QString pageSizeStr = QString::number(savedPageSize);
+    int index = ui.comboPageSize->findText(pageSizeStr);
+    if (index >= 0) {
+        ui.comboPageSize->setCurrentIndex(index);
+    }
+
+    // Load filter values into UI
+    if (settings.contains("filters/tag")) {
+        ui.tagFilterEdit->setText(settings.value("filters/tag").toString());
+    }
+    if (settings.contains("filters/minRating")) {
+        ui.ratingFilterSpin->setValue(settings.value("filters/minRating").toInt());
+    }
+    if (settings.value("filters/hasDateFilter", false).toBool()) {
+        ui.dateFromEdit->setDate(settings.value("filters/dateFrom").toDate());
+        ui.dateToEdit->setDate(settings.value("filters/dateTo").toDate());
+    }
+
+	// Load model settings (page size, sorting, filters)
+    auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
+    model->loadSettings();
+
+	// Load last opened folder
+    m_currentFolderPath = settings.value("lastFolder").toString();
+   
+	// Apply sorting
+    ui.tableView->sortByColumn(model->currentSortColumn(), model->currentSortOrder());
+}
+
+void TSS_App::saveSettings()
+{
+    QSettings settings("TssApp", "PhotoViewer");
+
+	// Save geometry and state
+    settings.setValue("mainWindow/geometry", saveGeometry());
+    settings.setValue("mainWindow/state", saveState());
+
+	// Save dark mode
+    settings.setValue("ui/darkMode", m_darkMode);
+
+	// Save column widths
+    for (int col = 0; col < PhotoTableModel::ColumnCount; ++col) {
+        QString key = QString("table/columnWidth_%1").arg(col);
+        settings.setValue(key, ui.tableView->columnWidth(col));
+    }
+
+	// Save filter values from UI
+    settings.setValue("filters/tag", ui.tagFilterEdit->text());
+    settings.setValue("filters/minRating", ui.ratingFilterSpin->value());
+    settings.setValue("filters/dateFrom", ui.dateFromEdit->date());
+    settings.setValue("filters/dateTo", ui.dateToEdit->date());
+
+	// Save last opened folder
+    if (!m_currentFolderPath.isEmpty()) {
+        settings.setValue("lastFolder", m_currentFolderPath);
+    }
+
+	// Save model settings (page size, sorting, filters)
+    auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
+    model->saveSettings();
+}
 
 void TSS_App::importPhotos()
 {
     auto& metaManager = PhotoMetadataManager::instance();
     metaManager.loadFromFile(); // Load existing metadata
 
-    QString dirPath = QFileDialog::getExistingDirectory(this, "Select folder with photos"); // Open directory selection dialog
+    QString startPath = m_currentFolderPath.isEmpty() ? QDir::homePath() : m_currentFolderPath;
+
+    QString dirPath = QFileDialog::getExistingDirectory(
+        this,
+        "Select folder with photos", 
+		startPath // Starting directory
+    ); // Open directory selection dialog
+
     if (dirPath.isEmpty()) return;
+
+    m_currentFolderPath = dirPath;
 
     // Find image files in the selected directory
     QStringList files;
@@ -199,8 +299,35 @@ void TSS_App::importPhotos()
     model->initializeWithPaths(files); // Lazy load photos
     QApplication::restoreOverrideCursor(); // Restore normal cursor
     QCoreApplication::processEvents(QEventLoop::AllEvents, 100); // Ensure UI updates
-    QMessageBox::information(this, "Done",
-        QString("Initialized %1 photos. Data loaded for first page.").arg(files.size())); // Notify user of completion
+    
+    int totalPhotos = files.size();
+    const QList<Photo>& visiblePhotos = model->getActivePhotos();
+    int visibleCount = visiblePhotos.size();
+
+    QString resultMessage;
+
+	// Check if filters are active
+    if (visibleCount < totalPhotos)
+    {
+		// Filters are applied - not all photos are visible
+        resultMessage = QString(
+            "Successfully imported %1 photos.\n\n"
+            "Currently displaying only %2 photos\n"
+            "because active filters are applied.\n\n"
+            "Click 'Clear Filter' to see all imported photos."
+        ).arg(totalPhotos).arg(visibleCount);
+    }
+    else
+    {
+		// No filters - all photos are visible
+        resultMessage = QString(
+            "Successfully imported %1 photos.\n\n"
+            "All photos are now visible in the table."
+        ).arg(totalPhotos);
+    }
+
+    QMessageBox::information(this, "Import Complete", resultMessage);
+
 
     updatePageLabel(); // Update pagination label
 }
@@ -251,7 +378,6 @@ void TSS_App::toggleDarkMode()
 }
 
 
-
 bool TSS_App::eventFilter(QObject* obj, QEvent* event)
 {
     // Check if Enter/Return was pressed in filter inputs
@@ -276,4 +402,10 @@ bool TSS_App::eventFilter(QObject* obj, QEvent* event)
     }
     // Pass event to base class
     return QMainWindow::eventFilter(obj, event);
+}
+
+void TSS_App::closeEvent(QCloseEvent* event)
+{
+    saveSettings();
+    event->accept();
 }
