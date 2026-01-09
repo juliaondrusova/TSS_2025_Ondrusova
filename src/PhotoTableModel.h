@@ -197,13 +197,13 @@ public:
      */
     Qt::SortOrder currentSortOrder() const { return m_sortOrder; }
 
-private:
-    // --- Internal filtering helpers ---
-
     /**
     * @brief Apply current filters to photo collection
     */
     void applyFilters();
+
+private:
+    // --- Internal filtering helpers ---
 
     /**
      * @brief Convert table row to real index in photo list

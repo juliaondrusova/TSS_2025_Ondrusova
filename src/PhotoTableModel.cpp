@@ -503,12 +503,14 @@ void PhotoTableModel::initializeWithPaths(const QStringList& allPaths)
         QCoreApplication::processEvents(); // refresh GUI
     }
 
+    endResetModel();
+
     if (hasActiveFilters()) {
         applyFilters();
     }
 
     progress.close();
-    endResetModel();
+   
 }
 
 Photo * PhotoTableModel::getPhotoPointer(int row) 
