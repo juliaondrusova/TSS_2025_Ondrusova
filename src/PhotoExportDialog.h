@@ -58,6 +58,12 @@ private slots:
     void onDeselectAllClicked();
 
     /**
+     * @brief Sets all checkboxes in the table to the specified state.
+     * @param checked True to check all, false to uncheck all.
+	 */
+    void setAllCheckboxes(bool checked);
+
+    /**
       * @brief Starts exporting all selected photos.
       *
       * @details Validates all paths before export. Updates the progress bar
@@ -85,13 +91,15 @@ private slots:
      */
     void onNewPathChanged(int row, int column);
 
-    /**
-     * @brief Toggles inclusion of non-edited photos for export.
-     * @param checked True if non-edited photos should be included.
-     */
-    void onIncludeNonEditedToggled(bool checked);
 
 private:
+
+    /**
+     * @brief Enables or disables the export button.
+     * @param enabled True to enable, false to disable.
+	 */
+    void setExportButtonsEnabled(bool enabled);
+
     /**
      * @brief Initializes and arranges all UI components.
      *

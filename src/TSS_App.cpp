@@ -162,7 +162,19 @@ TSS_App::TSS_App(QWidget* parent)
         });
 
     loadSettings();
+
+    model->setDateFilter(ui.dateFromEdit->date(), ui.dateToEdit->date());
+    model->setTagFilter(ui.tagFilterEdit->text());
+    model->setRatingFilter(ui.ratingFilterSpin->value());
+
     updatePageLabel();
+
+	// Show placeholder if no photos have been loaded yet
+    if (model->getActivePhotos().isEmpty()) 
+    {
+        m_placeholderLabel->resize(ui.tableView->viewport()->size());
+        m_placeholderLabel->show();
+    }
 }
 
 
@@ -264,7 +276,6 @@ void TSS_App::importPhotos()
     metaManager.loadFromFile(); // Load existing metadata
 
     QString startPath = m_currentFolderPath.isEmpty() ? QDir::homePath() : m_currentFolderPath;
-
     QString dirPath = QFileDialog::getExistingDirectory(
         this,
         "Select folder with photos", 
@@ -295,14 +306,21 @@ void TSS_App::importPhotos()
 
 
     auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
+
     QApplication::setOverrideCursor(Qt::WaitCursor); // Show wait cursor during loading
     model->initializeWithPaths(files); // Lazy load photos
+
+    // Apply current filters from UI AFTER loading
+    model->applyFilters();
+
     QApplication::restoreOverrideCursor(); // Restore normal cursor
     QCoreApplication::processEvents(QEventLoop::AllEvents, 100); // Ensure UI updates
     
     int totalPhotos = files.size();
     const QList<Photo>& visiblePhotos = model->getActivePhotos();
+    
     int visibleCount = visiblePhotos.size();
+    visibleCount > 0 ? m_placeholderLabel->hide() : m_placeholderLabel->show();
 
     QString resultMessage;
 

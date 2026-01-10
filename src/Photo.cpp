@@ -28,19 +28,24 @@ Photo::Photo(const QString& path)
     // File size calculation (human-readable)
     const qint64 sizeBytes = info.size();
     m_sizeBytes = sizeBytes;
-	if (sizeBytes < ONE_KB) { // Bytes
+
+	if (sizeBytes < ONE_KB) 
+    { // Bytes
         m_size = QString::number(sizeBytes) + " B";
     }
-	else if (sizeBytes < ONE_MB) { // Kilobytes
+	else if (sizeBytes < ONE_MB) 
+    { // Kilobytes
         double kb = sizeBytes / static_cast<double>(ONE_KB);
         m_size = QString::number(kb, 'f', 1) + " KB";
     }
-	else { // Megabytes
+	else 
+    { // Megabytes
         double mb = sizeBytes / static_cast<double>(ONE_MB);
         m_size = QString::number(mb, 'f', 1) + " MB";
     }
 
-    m_dateTime = info.lastModified(); // Store file modification time
+    // Store file modification time
+    m_dateTime = info.lastModified();
 
     // Normalize path for consistent metadata lookup
     QString normalizedPath = info.canonicalFilePath();
@@ -66,6 +71,7 @@ QPixmap Photo::preview() const
 {
     if (m_preview.isNull())
 		const_cast<Photo*>(this)->generatePreview(); // Generate preview if not already done
+
     return m_preview;
 }
 
@@ -73,18 +79,24 @@ QPixmap Photo::preview() const
 void Photo::generatePreview(int size) 
 {
     QImage img(m_filePath);
+
 	if (img.isNull()) // Failed to load image
         return;
 
-	const QImage scaled = img.scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation); // Scale image
-	m_preview = QPixmap::fromImage(scaled); // Store as QPixmap
+    // Scale image
+	const QImage scaled = img.scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation); 
+
+    // Store as QPixmap
+	m_preview = QPixmap::fromImage(scaled); 
 }
 
 /** Sets a custom edited version of the photo and marks it for export. */
 void Photo::setEditedPixmap(const QPixmap& pixmap) 
 {
     m_editedPixmap = pixmap;
-	m_hasEditedVersion = !pixmap.isNull(); // Mark that an edited version exists
+
+    // Mark that an edited version exists
+	m_hasEditedVersion = !pixmap.isNull();
 
     if (m_hasEditedVersion)
         m_markedForExport = true;
@@ -94,6 +106,10 @@ void Photo::setEditedPixmap(const QPixmap& pixmap)
 void Photo::clearEditedVersion() 
 {
     m_editedPixmap = QPixmap();
-	m_hasEditedVersion = false; // No edited version
-	m_markedForExport = false; // Clear export mark
+
+    // No edited version
+	m_hasEditedVersion = false; 
+
+    // Clear export mark
+	m_markedForExport = false; 
 }

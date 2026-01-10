@@ -20,6 +20,7 @@ PhotoExportDialog::PhotoExportDialog(const QList<Photo*>& photosToExport, QWidge
 
 	// Setup UI components
     setupUI();
+
 	// Populate table with edited photos
     populateTable();
 }
@@ -83,7 +84,7 @@ void PhotoExportDialog::setupUI()
     mainLayout->addLayout(buttonLayout);
 
     // Connect signals
-     connect(m_btnSelectAll, &QPushButton::clicked, this, &PhotoExportDialog::onSelectAllClicked);
+    connect(m_btnSelectAll, &QPushButton::clicked, this, &PhotoExportDialog::onSelectAllClicked);
     connect(m_btnDeselectAll, &QPushButton::clicked, this, &PhotoExportDialog::onDeselectAllClicked);
     connect(m_btnExport, &QPushButton::clicked, this, &PhotoExportDialog::onExportClicked);
     connect(m_btnCancel, &QPushButton::clicked, this, &PhotoExportDialog::onCancelClicked);
@@ -94,7 +95,6 @@ void PhotoExportDialog::setupUI()
 void PhotoExportDialog::populateTable() 
 { 
     m_tableWidget->setRowCount(m_photosToExport.size());
-
     m_tableWidget->blockSignals(true); // Prevent signals during setup
 
     for (int i = 0; i < m_photosToExport.size(); i++)
@@ -114,6 +114,7 @@ void PhotoExportDialog::createTableRow(int row, Photo* photo)
     QWidget* checkboxWidget = new QWidget();
     QCheckBox* checkbox = new QCheckBox();
     checkbox->setChecked(true); // Default checked
+
     QHBoxLayout* checkboxLayout = new QHBoxLayout(checkboxWidget);
     checkboxLayout->addWidget(checkbox);
     checkboxLayout->setAlignment(Qt::AlignCenter);
@@ -121,19 +122,11 @@ void PhotoExportDialog::createTableRow(int row, Photo* photo)
     m_tableWidget->setCellWidget(row, ColCheckbox, checkboxWidget);
 
     // Column 1: Preview
+    QPixmap preview = photo->hasEditedVersion() 
+        ? photo->editedPixmap().scaled(100, 100, Qt::KeepAspectRatio, Qt::SmoothTransformation)
+        : photo->preview();    
+    
     QLabel* previewLabel = new QLabel();
-    QPixmap preview;
-    if (photo->hasEditedVersion()) 
-        preview = photo->editedPixmap().scaled(100, 100, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    else 
-    {
-		// Use preview or load from file
-        if (!photo->preview().isNull())
-            preview = photo->preview();    
-        else
-            preview = QPixmap(photo->filePath()).scaled(100, 100, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    }
-
     previewLabel->setPixmap(preview);
     previewLabel->setAlignment(Qt::AlignCenter);
     m_tableWidget->setCellWidget(row, ColPreview, previewLabel);
@@ -154,7 +147,7 @@ void PhotoExportDialog::createTableRow(int row, Photo* photo)
     QPushButton* browseBtn = new QPushButton("Browse...", this);
     connect(browseBtn, &QPushButton::clicked, this, [this, row]() { 
 		onBrowseClicked(row); //open folder dialog
-        });
+    });
     m_tableWidget->setCellWidget(row, ColBrowse, browseBtn);
 
     // Column 5: Status placeholder - initialize empty
@@ -175,44 +168,42 @@ void PhotoExportDialog::onBrowseClicked(int row)
 		QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks // only directories and no symlink resolution
     );
 
-    if (!selectedFolder.isEmpty()) 
+    if (!selectedFolder.isEmpty())
     {
-		// Original file name
-        QString fileName = fileInfo.fileName();
-        QString newPath = QDir(selectedFolder).filePath(fileName);
-
+        QString newPath = QDir(selectedFolder).filePath(fileInfo.fileName());
         m_tableWidget->item(row, ColNewPath)->setText(newPath);
 
-        // Update status icon
+		// Update status icon
         updateStatusIcon(row);
     }
 }
 
-void PhotoExportDialog::onSelectAllClicked() 
+void PhotoExportDialog::onSelectAllClicked()
 {
-    for (int i = 0; i < m_tableWidget->rowCount(); i++) 
-    {
-        QWidget* widget = m_tableWidget->cellWidget(i, ColCheckbox);
-		QCheckBox* checkbox = widget->findChild<QCheckBox*>(); // Find the checkbox
-		if (checkbox) // Set it checked
-            checkbox->setChecked(true);
-    }
+    setAllCheckboxes(true);
 }
 
-void PhotoExportDialog::onDeselectAllClicked() 
+void PhotoExportDialog::onDeselectAllClicked()
 {
-    for (int i = 0; i < m_tableWidget->rowCount(); i++) 
+    setAllCheckboxes(false);
+}
+
+void PhotoExportDialog::setAllCheckboxes(bool checked)
+{
+    for (int i = 0; i < m_tableWidget->rowCount(); i++)
     {
         QWidget* widget = m_tableWidget->cellWidget(i, ColCheckbox);
-		QCheckBox* checkbox = widget->findChild<QCheckBox*>(); // Find the checkbox
-		if (checkbox) // Set it unchecked
-            checkbox->setChecked(false);
+        QCheckBox* checkbox = widget->findChild<QCheckBox*>();
+
+        if (checkbox)
+            checkbox->setChecked(checked);
     }
 }
 
 void PhotoExportDialog::onPreviewDoubleClicked(int row, int column) 
 {
-    if (column != ColPreview) return;
+    if (column != ColPreview) 
+        return;
 
     Photo* photo = m_photosToExport[row];
     PhotoDetailDialog* dlg = new PhotoDetailDialog(this); 
@@ -221,10 +212,6 @@ void PhotoExportDialog::onPreviewDoubleClicked(int row, int column)
 	delete dlg; // Clean up after closing
 }
 
-void PhotoExportDialog::onIncludeNonEditedToggled(bool checked) {
-    // Repopulate the table with new photo list
-    populateTable();
-}
 
 void PhotoExportDialog::onNewPathChanged(int row, int column) 
 {
@@ -284,6 +271,7 @@ QList<Photo*> PhotoExportDialog::getSelectedPhotos()
 		if (checkbox && checkbox->isChecked())  // If checked, add to selected list
             selected.append(m_photosToExport[i]);
     }
+
     return selected;
 }
 
@@ -295,13 +283,13 @@ QString PhotoExportDialog::getPathError(const QString& path)
     QFileInfo fileInfo(path);
 
     // Check if directory exists
-    QDir dir = fileInfo.absoluteDir();
-    if (!dir.exists())
+    if (!fileInfo.absoluteDir().exists())
         return "Directory does not exist";
 
     // Check if file has valid extension
     QString suffix = fileInfo.suffix().toLower();
     QStringList validExtensions = { "png", "jpg", "jpeg", "bmp", "tiff", "gif" };
+
     if (!validExtensions.contains(suffix))
         return "Invalid file extension (use: " + validExtensions.join(", ") + ")";
 
@@ -310,12 +298,14 @@ QString PhotoExportDialog::getPathError(const QString& path)
 
 void PhotoExportDialog::updateStatusIcon(int row) 
 {
-    if (!m_tableWidget->item(row, ColNewPath)) return;
+    if (!m_tableWidget->item(row, ColNewPath)) 
+        return;
 
     QString newPath = m_tableWidget->item(row, ColNewPath)->text();
     QString error = getPathError(newPath);
 
     QLabel* statusLabel = qobject_cast<QLabel*>(m_tableWidget->cellWidget(row, ColStatus)); 
+
 	// Create label if not existing
     if (!statusLabel) 
     {
@@ -383,7 +373,8 @@ void PhotoExportDialog::onExportClicked()
 
 		// Confirm overwrite
         if (QMessageBox::question(this, "Confirm Overwrite", message,
-            QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+            QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) 
+        {
             return;
         }
     }
@@ -391,7 +382,8 @@ void PhotoExportDialog::onExportClicked()
     // Confirm export
     QString confirmMsg = QString("Export %1 edited photo(s)?").arg(selectedPhotos.size());
     if (QMessageBox::question(this, "Confirm Export", confirmMsg,
-        QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+        QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) 
+    {
         return;
     }
 
@@ -401,11 +393,7 @@ void PhotoExportDialog::onExportClicked()
 
 void PhotoExportDialog::exportPhotos()
 {
-    // Disable buttons during export
-    m_btnExport->setEnabled(false);
-    m_btnCancel->setEnabled(false);
-    m_btnSelectAll->setEnabled(false);
-    m_btnDeselectAll->setEnabled(false);
+    setExportButtonsEnabled(false);
 
     m_progressBar->setVisible(true);
     m_progressBar->setMaximum(m_tableWidget->rowCount());
@@ -419,7 +407,7 @@ void PhotoExportDialog::exportPhotos()
     QMap<QString, QString> backupMap; // originalPath -> tempBackupPath
 
     // --- Main export loop ---
-    for (int i = 0; i < m_tableWidget->rowCount(); ++i)
+    for (int i = 0; i < m_tableWidget->rowCount(); i++)
     {
         QWidget* widget = m_tableWidget->cellWidget(i, ColCheckbox);
         QCheckBox* checkbox = widget ? widget->findChild<QCheckBox*>() : nullptr;
@@ -430,6 +418,7 @@ void PhotoExportDialog::exportPhotos()
         QString originalPath = m_tableWidget->item(i, ColOriginalPath)->text();
         QString newPath = m_tableWidget->item(i, ColNewPath)->text();
         Photo* photo = m_photosToExport[i];
+
         QApplication::processEvents();
 
         // --- If overwriting same file, back it up first ---
@@ -502,10 +491,16 @@ void PhotoExportDialog::exportPhotos()
     }
 
     // Re-enable buttons
-    m_btnExport->setEnabled(true);
-    m_btnCancel->setEnabled(true);
-    m_btnSelectAll->setEnabled(true);
-    m_btnDeselectAll->setEnabled(true);
+    setExportButtonsEnabled(true);
+}
+
+
+void PhotoExportDialog::setExportButtonsEnabled(bool enabled)
+{
+    m_btnExport->setEnabled(enabled);
+    m_btnCancel->setEnabled(enabled);
+    m_btnSelectAll->setEnabled(enabled);
+    m_btnDeselectAll->setEnabled(enabled);
 }
 
 

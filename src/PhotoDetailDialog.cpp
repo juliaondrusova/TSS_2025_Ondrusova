@@ -8,10 +8,14 @@
 #include <QPushButton>
 
 // Helper function to calculate scale factor to fit a pixmap into a viewport
-static double fitScale(const QSize& viewportSize, const QPixmap& pixmap) {
-    if (pixmap.isNull()) return 1.0;
+static double fitScale(const QSize& viewportSize, const QPixmap& pixmap) 
+{
+    if (pixmap.isNull()) 
+        return 1.0;
+
     double factorW = static_cast<double>(viewportSize.width()) / pixmap.width();
     double factorH = static_cast<double>(viewportSize.height()) / pixmap.height();
+
     return qMin(factorW, factorH);
 }
 
@@ -55,77 +59,83 @@ PhotoDetailDialog::PhotoDetailDialog(QWidget* parent)
     connect(fullscreenBtn, &QPushButton::clicked, this, &PhotoDetailDialog::toggleFullscreen);
 }
 
-void PhotoDetailDialog::setPhoto(const Photo& photo) 
+void PhotoDetailDialog::setPhoto(const Photo& photo)
 {
-    // Load either edited pixmap or original photo file
-    if(photo.hasEditedVersion())
-        originalPixmap = photo.editedPixmap();
-    else
-     originalPixmap = QPixmap(photo.filePath());
-
-    if (originalPixmap.isNull()) return;
-    
     currentPhoto = photo;
+
+    // Load either edited pixmap or original photo file
+    originalPixmap = photo.hasEditedVersion() ? photo.editedPixmap() : QPixmap(photo.filePath());
 }
 
 
-void PhotoDetailDialog::showEvent(QShowEvent* event) 
+void PhotoDetailDialog::showEvent(QShowEvent* event)
 {
     QDialog::showEvent(event);
-    if (originalPixmap.isNull()) return;
 
-    // Calculate scale to fit image in viewport
-    double scale = fitScale(scrollArea->viewport()->size(), originalPixmap);
+    if (originalPixmap.isNull())
+        return;
 
-    // Update zoom slider without triggering slot
+    // Calculate and apply initial fit-to-viewport zoom
+    int fitZoom = static_cast<int>(fitScale(scrollArea->viewport()->size(), originalPixmap) * 100);
+
     zoomSlider->blockSignals(true);
-    zoomSlider->setValue(static_cast<int>(scale * 100));
+    zoomSlider->setValue(fitZoom);
     zoomSlider->blockSignals(false);
 
-    // Apply initial zoom
-    zoomChanged(static_cast<int>(scale * 100));
+    zoomChanged(fitZoom);
 }
 
-
-void PhotoDetailDialog::wheelEvent(QWheelEvent* event) 
+void PhotoDetailDialog::wheelEvent(QWheelEvent* event)
 {
     // Ctrl + wheel changes zoom
-    if (event->modifiers() & Qt::ControlModifier) 
+    if (event->modifiers() & Qt::ControlModifier)
     {
-        int delta = event->angleDelta().y();
-        int newValue = qBound(zoomSlider->minimum(),
-            zoomSlider->value() + (delta > 0 ? 10 : -10),
-            zoomSlider->maximum());
+        // Zoom step
+		int delta = event->angleDelta().y() > 0 ? 10 : -10; 
+
+		// Calculate new zoom value within slider range
+        int newValue = qBound(zoomSlider->minimum(), zoomSlider->value() + delta, zoomSlider->maximum());
+
         zoomSlider->setValue(newValue);
         event->accept();
     }
     else
-        QDialog::wheelEvent(event);
+    {
+        QDialog::wheelEvent(event); 
+    }
 }
 
 
-void PhotoDetailDialog::toggleFullscreen() 
+void PhotoDetailDialog::toggleFullscreen()
 {
     // Toggle between fullscreen and normal
-    isFullscreen ? showNormal() : showFullScreen();
-    fullscreenBtn->setText(isFullscreen ? "Fullscreen" : "Exit Fullscreen");
-    isFullscreen = !isFullscreen;
+    if (isFullscreen)
+        showNormal();
+    else
+        showFullScreen();
+
+	isFullscreen = !isFullscreen; // Update state
+	fullscreenBtn->setText(isFullscreen ? "Exit Fullscreen" : "Fullscreen"); // Update button text
 
     // Adjust zoom for new window size
-    if (!originalPixmap.isNull()) 
+    if (!originalPixmap.isNull())
     {
-        double scale = fitScale(scrollArea->viewport()->size(), originalPixmap);
+		// Calculate and apply fit-to-viewport zoom
+        int fitZoom = static_cast<int>(fitScale(scrollArea->viewport()->size(), originalPixmap) * 100);
+
         zoomSlider->blockSignals(true);
-        zoomSlider->setValue(static_cast<int>(scale * 100));
+        zoomSlider->setValue(fitZoom);
         zoomSlider->blockSignals(false);
-        zoomChanged(static_cast<int>(scale * 100));
+
+        zoomChanged(fitZoom);
     }
 }
 
 
 void PhotoDetailDialog::zoomChanged(int value) 
 {
-    if (originalPixmap.isNull()) return;
+    if (originalPixmap.isNull()) 
+        return;
 
     // Scale original pixmap according to slider value
     double scale = value / 100.0;

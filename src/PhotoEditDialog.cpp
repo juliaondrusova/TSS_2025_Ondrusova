@@ -1,4 +1,5 @@
 #include "PhotoEditDialog.h"
+
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -47,8 +48,8 @@ PhotoEditorDialog::PhotoEditorDialog(Photo* photo, QWidget* parent)
     resize(900, 700);
 
 	// load edited or original pixmap
-    m_originalPixmap = photo->hasEditedVersion()
-        ? photo->editedPixmap()
+    m_originalPixmap = photo->hasEditedVersion() 
+        ? photo->editedPixmap() 
         : QPixmap(photo->filePath());
 
     m_editedPixmap = m_originalPixmap;
@@ -94,6 +95,7 @@ void PhotoEditorDialog::createPreviewArea(QVBoxLayout* layout)
     previewLabel->setScaledContents(false);
     previewLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	previewLabel->setMouseTracking(true); // Enable mouse tracking for crop
+
     layout->addWidget(previewLabel);
 }
 
@@ -174,9 +176,11 @@ void PhotoEditorDialog::createWatermarkPanel(QVBoxLayout* layout)
     // Position selector
     QHBoxLayout* posLayout = new QHBoxLayout();
     posLayout->addWidget(new QLabel("Position:", this));
+
     watermarkPositionCombo = new QComboBox(this);
 	watermarkPositionCombo->addItems({ "Top Left", "Top Right", "Bottom Left", "Bottom Right", "Center" }); // Preddefined positions
 	watermarkPositionCombo->setCurrentIndex(DEFAULT_WATERMARK_POSITION); // Default to Bottom Right
+    
     posLayout->addWidget(watermarkPositionCombo);
     groupLayout->addLayout(posLayout);
 
@@ -199,8 +203,8 @@ void PhotoEditorDialog::createWatermarkPanel(QVBoxLayout* layout)
 
 	opacityLayout->addWidget(watermarkOpacitySlider, 3); // slider takes 3/4 of space
 	opacityLayout->addWidget(opacitySpin, 1); // spinbox takes 1/4 of space
-    groupLayout->addLayout(opacityLayout);
 
+    groupLayout->addLayout(opacityLayout);
     layout->addWidget(group);
 }
 
@@ -251,11 +255,10 @@ void PhotoEditorDialog::connectSignals()
 
     // Watermark
     connect(watermarkBtn, &QPushButton::clicked, this, &PhotoEditorDialog::addWatermark);
-    connect(watermarkPositionCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
-        this, [this](int index) {
+    connect(watermarkPositionCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
             m_watermarkPosition = index;
             updateTimer->start();
-        });
+     });
     connect(watermarkOpacitySlider, &QSlider::valueChanged, this, [this](int value) {
         m_watermarkOpacity = value;
         updateTimer->start();
@@ -270,7 +273,7 @@ void PhotoEditorDialog::connectSliderWithSpinbox(QSlider* slider, QSpinBox* spin
     connect(slider, &QSlider::valueChanged, this, [this, &value](int newValue) {
         value = newValue;
         updateTimer->start();
-        });
+     });
 }
 
 // --- Basic Operations ---
@@ -310,12 +313,7 @@ void PhotoEditorDialog::mousePressEvent(QMouseEvent* event)
     {
         m_showingOriginal = true;
         QPixmap originalFromFile = QPixmap(m_originalPhoto.filePath());
-
-        QPixmap scaled = originalFromFile.scaled(
-            previewLabel->size(),
-            Qt::KeepAspectRatio,
-            Qt::SmoothTransformation
-        );
+        QPixmap scaled = originalFromFile.scaled(previewLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
         previewLabel->setPixmap(scaled);
         event->accept();
@@ -445,7 +443,8 @@ void PhotoEditorDialog::updatePreview()
 
 void PhotoEditorDialog::applyRotation(QImage& image) 
 {
-    if (m_rotation == 0) return;
+    if (m_rotation == 0) 
+        return;
 
     QTransform transform;
 	transform.rotate(m_rotation); // Rotate by the specified angle
@@ -454,7 +453,8 @@ void PhotoEditorDialog::applyRotation(QImage& image)
 
 void PhotoEditorDialog::applyContrast(QImage& image) 
 {
-	if (m_contrast == 0) return; // No change
+	if (m_contrast == 0) 
+        return; // No change
 
 	double factor = (259 * (m_contrast + 255)) / (255.0 * (259 - m_contrast)); // Contrast factor calculation, photoshop formula
 
@@ -525,11 +525,7 @@ void PhotoEditorDialog::applySaturation(QImage& image)
 void PhotoEditorDialog::displayScaledPreview() 
 {
 	// Scale the edited pixmap to fit the preview label while maintaining aspect ratio
-    QPixmap scaled = m_editedPixmap.scaled(
-        previewLabel->size(),
-        Qt::KeepAspectRatio,
-        Qt::SmoothTransformation
-    );
+    QPixmap scaled = m_editedPixmap.scaled(previewLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
     previewLabel->setPixmap(scaled);
 }
 
@@ -578,7 +574,8 @@ void PhotoEditorDialog::applyFilter(int filterIndex)
 
 void PhotoEditorDialog::applyActiveFilter(QImage& image) 
 {
-    if (m_activeFilter == 0) return; // None
+    if (m_activeFilter == 0) 
+        return; // None
 
     // Show progress dialog for large images
 	bool showProgress = (image.width() * image.height() > PROGRESS_THRESHOLD_PIXELS); // 1 megapixel
@@ -591,14 +588,7 @@ void PhotoEditorDialog::applyActiveFilter(QImage& image)
         progress->setMinimumDuration(0);
     }
 
-	switch (m_activeFilter) // Apply selected filter
-    {
-    case 1: applyGrayscaleFilter(image, progress); break;
-    case 2: applySepiaFilter(image, progress); break;
-    case 3: applyNegativeFilter(image, progress); break;
-    case 4: applyPastelFilter(image, progress); break;
-    case 5: applyVintageFilter(image, progress); break;
-    }
+    processImagePixels(image, progress, m_activeFilter);
 
 	if (progress) // Clean up progress dialog
     {
@@ -607,178 +597,18 @@ void PhotoEditorDialog::applyActiveFilter(QImage& image)
     }
 }
 
-void PhotoEditorDialog::applyGrayscaleFilter(QImage& image, QProgressDialog* progress) 
+void PhotoEditorDialog::processImagePixels(
+    QImage& image,
+    QProgressDialog* progress,
+    int filterNumber) // filterNumber: 0 = none, 1 = grayscale, 2 = sepia, 3 = negative, 4 = pastel, 5 = vintage
 {
-	// Check and convert image format
-    if (image.format() != QImage::Format_RGB32 && image.format() != QImage::Format_ARGB32)
-        image = image.convertToFormat(QImage::Format_RGB32);
-
-    int height = image.height();
-    int width = image.width();
-
-	if (progress) // Setup progress dialog
-    {
-        progress->setMaximum(height);
-        progress->show();
-    }
-
-    for (int y = 0; y < height; y++) 
-    {
-		QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y)); // Get pointer to the start of the line
-        for (int x = 0; x < width; x++) 
-        {
-			QColor pixelColor(line[x]); // Get pixel color
-            int gray = static_cast<int>(0.2126 * pixelColor.red() + 0.7152 * pixelColor.green() + 0.0722 * pixelColor.blue()); // Calculate grayscale value using luminosity method
-			line[x] = qRgb(gray, gray, gray); // Set new pixel color
-        }
-
-		if (progress) // Update progress
-        {
-            progress->setValue(y);
-			QCoreApplication::processEvents(); // Keep UI responsive
-        }
-    }
-
-	if (progress) // Hide progress dialog
-        progress->hide();
-}
-
-
-void PhotoEditorDialog::applySepiaFilter(QImage& image, QProgressDialog* progress) 
-{
-	// Check and convert image format
-    if (image.format() != QImage::Format_RGB32 && image.format() != QImage::Format_ARGB32)
-        image = image.convertToFormat(QImage::Format_RGB32);
-   
-    int height = image.height();
-    int width = image.width();
-
-	if (progress) // Setup progress dialog
-    {
-        progress->setMaximum(height);
-        progress->show();
-    }
-
-    for (int y = 0; y < height; y++) 
-    {
-		QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y)); // Get pointer to the start of the line
-        for (int x = 0; x < width; x++) 
-        {
-			QColor pixelColor(line[x]); // Get pixel color
-
-			// Apply sepia formula
-            int newR = static_cast<int>(0.393 * pixelColor.red() + 0.769 * pixelColor.green() + 0.189 * pixelColor.blue());
-            int newG = static_cast<int>(0.349 * pixelColor.red() + 0.686 * pixelColor.green() + 0.168 * pixelColor.blue());
-            int newB = static_cast<int>(0.272 * pixelColor.red() + 0.534 * pixelColor.green() + 0.131 * pixelColor.blue());
-
-			line[x] = qRgb(qMin(newR, 255), qMin(newG, 255), qMin(newB, 255)); // Set new pixel color
-        }
-
-		if (progress)  // Update progress
-        {
-            progress->setValue(y);
-            QCoreApplication::processEvents();
-        }
-    }
-
-	if (progress) // Hide progress dialog
-        progress->hide();
-}
-
-
-void PhotoEditorDialog::applyNegativeFilter(QImage& image, QProgressDialog* progress) 
-{
-	// Check and convert image format
-    if (image.format() != QImage::Format_RGB32 && image.format() != QImage::Format_ARGB32)
-        image = image.convertToFormat(QImage::Format_RGB32);
-
-    int height = image.height();
-    int width = image.width();
-
-	if (progress) // Setup progress dialog
-    {
-        progress->setMaximum(height);
-        progress->show();
-    }
-
-    for (int y = 0; y < height; y++) 
-    {
-		QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y)); // Get pointer to the start of the line
-        for (int x = 0; x < width; x++) 
-        {
-			QColor pixeloColor(line[x]); // Get pixel color
-			line[x] = qRgb(255 - pixeloColor.red(), 255 - pixeloColor.green(), 255 - pixeloColor.blue()); // Invert colors and set new pixel color
-        }
-
-		if (progress) // Update progress
-        {
-            progress->setValue(y);
-            QCoreApplication::processEvents();
-        }
-    }
-
-	if (progress) // Hide progress dialog
-        progress->hide();
-}
-
-
-void PhotoEditorDialog::applyPastelFilter(QImage& image, QProgressDialog* progress) 
-{
-	// Check and convert image format
-    if (image.format() != QImage::Format_RGB32 && image.format() != QImage::Format_ARGB32)
+    if (image.format() != QImage::Format_RGB32)
         image = image.convertToFormat(QImage::Format_RGB32);
 
     int width = image.width();
     int height = image.height();
 
-	if (progress) // Setup progress dialog
-    {
-        progress->setMaximum(height);
-        progress->show();
-    }
-
-    for (int y = 0; y < height; y++) 
-    {
-		QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y)); // Get pointer to the start of the line
-        for (int x = 0; x < width; x++) 
-        {
-			QColor pixelColor(line[x]); // Get pixel color
-
-			// Lower contrast and lighten
-            int r = qBound(0, static_cast<int>(pixelColor.red() * 0.8 + 60), 255);
-            int g = qBound(0, static_cast<int>(pixelColor.green() * 0.8 + 60), 255);
-            int b = qBound(0, static_cast<int>(pixelColor.blue() * 0.9 + 70), 255);
-
-			// Pink and purple tint
-            r = qBound(0, r + 10, 255);
-            b = qBound(0, b + 25, 255);
-
-            line[x] = qRgb(r, g, b);
-        }
-
-		if (progress) // Update progress
-        {
-            progress->setValue(y);
-            QCoreApplication::processEvents();
-        }
-    }
-
-	if (progress) // Hide progress dialog
-        progress->hide();
-
-}
-
-
-void PhotoEditorDialog::applyVintageFilter(QImage& image, QProgressDialog* progress)
-{
-    // Check and convert image format
-    if (image.format() != QImage::Format_RGB32 && image.format() != QImage::Format_ARGB32)
-        image = image.convertToFormat(QImage::Format_RGB32);
-
-    int width = image.width();
-    int height = image.height();
-
-    if (progress) // Setup progress dialog
+    if (progress)
     {
         progress->setMaximum(height);
         progress->show();
@@ -786,49 +616,80 @@ void PhotoEditorDialog::applyVintageFilter(QImage& image, QProgressDialog* progr
 
     for (int y = 0; y < height; y++)
     {
-        QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y)); // Get pointer to the start of the line
+        QRgb* line = (QRgb*)image.scanLine(y);
+
         for (int x = 0; x < width; x++)
         {
-            QColor pixelColor(line[x]); // Get pixel color
+            QRgb pixel = line[x];
 
-			// Lower saturation
-            int gray = qGray(pixelColor.rgb());
-            pixelColor.setRed((pixelColor.red() + gray * 2) / 3);
-            pixelColor.setGreen((pixelColor.green() + gray * 2) / 3);
-            pixelColor.setBlue((pixelColor.blue() + gray * 2) / 3);
+            int r = qRed(pixel);
+            int g = qGreen(pixel);
+            int b = qBlue(pixel);
 
-			// Apply warm tint
-            int r = pixelColor.red();
-            int g = pixelColor.green();
-            int b = pixelColor.blue();
+            int nr = r;
+            int ng = g;
+            int nb = b;
 
-            int newR = qBound(0, int(r * 0.9 + g * 0.5 + b * 0.2), 255);
-            int newG = qBound(0, int(r * 0.3 + g * 0.7 + b * 0.2), 255);
-            int newB = qBound(0, int(r * 0.1 + g * 0.3 + b * 0.6), 255);
+            switch (filterNumber)
+            {
+            case 1: // Grayscale
+            {
+                int gray = qGray(pixel);
+                nr = ng = nb = gray;
+                break;
+            }
+            case 2: // Sepia
+            {
+                nr = qMin(255, int(0.393 * r + 0.769 * g + 0.189 * b));
+                ng = qMin(255, int(0.349 * r + 0.686 * g + 0.168 * b));
+                nb = qMin(255, int(0.272 * r + 0.534 * g + 0.131 * b));
+                break;
+            }
+            case 3: // Negative
+            {
+                nr = 255 - r;
+                ng = 255 - g;
+                nb = 255 - b;
+                break;
+            }
+            case 4: // Pastel
+            {
+                nr = qBound(0, int(r * 0.8 + 70), 255);
+                ng = qBound(0, int(g * 0.8 + 60), 255);
+                nb = qBound(0, int(b * 0.9 + 95), 255);
+                break;
+            }
+            case 5: // Vintage
+            {
+                int gray = qGray(pixel);
+                int dr = (r + gray * 2) / 3;
+                int dg = (g + gray * 2) / 3;
+                int db = (b + gray * 2) / 3;
 
-            pixelColor.setRed(newR);
-            pixelColor.setGreen(newG);
-            pixelColor.setBlue(newB);
+                nr = qBound(0, int(dr * 0.9 + dg * 0.5 + db * 0.2), 255);
+                ng = qBound(0, int(dr * 0.3 + dg * 0.7 + db * 0.2), 255);
+                nb = qBound(0, int(dr * 0.1 + dg * 0.3 + db * 0.6), 255);
 
-			// Lower contrast and lighten
-            pixelColor.setRed(qBound(0, (pixelColor.red() + 255) / 2, 255));
-            pixelColor.setGreen(qBound(0, (pixelColor.green() + 255) / 2, 255));
-            pixelColor.setBlue(qBound(0, (pixelColor.blue() + 255) / 2, 255));
+                nr = (nr + 255) / 2;
+                ng = (ng + 255) / 2;
+                nb = (nb + 255) / 2;
+                break;
+            }
+            default:
+                // 0 alebo neznámy filter = niè sa nemení
+                break;
+            }
 
-            line[x] = pixelColor.rgb();
+            line[x] = qRgb(nr, ng, nb);
         }
 
-        if (progress) // Update progress
+        if (progress && y % 10 == 0)
         {
             progress->setValue(y);
             QCoreApplication::processEvents();
         }
     }
-
-    if (progress) // Hide progress dialog
-        progress->hide();
 }
-
 
 // --- Watermark ---
 
@@ -855,14 +716,10 @@ void PhotoEditorDialog::applyWatermark(QImage& image)
 
     // Scale watermark to 1/4 of image width
     int wmWidth = image.width() / 4;
-    QPixmap scaledWm = m_watermarkPixmap.scaled(
-        wmWidth, wmWidth,
-        Qt::KeepAspectRatio,
-        Qt::SmoothTransformation
-    );
+    QPixmap scaledWm = m_watermarkPixmap.scaled(wmWidth, wmWidth, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
-	QPoint position = calculateWatermarkPosition(image.size(), scaledWm.size()); // Calculate position based on user selection
-	painter.drawPixmap(position, scaledWm); // Draw watermark at calculated position
+    
+    painter.drawPixmap(calculateWatermarkPosition(image.size(), scaledWm.size()), scaledWm); // Draw watermark at calculated position
 	painter.end(); // End painting
 }
 

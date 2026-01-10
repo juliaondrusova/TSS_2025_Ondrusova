@@ -133,11 +133,7 @@ private:
     void displayScaledPreview();
 
     // Filters
-    void applyGrayscaleFilter(QImage& image, QProgressDialog* progress = nullptr);
-    void applySepiaFilter(QImage& image, QProgressDialog* progress = nullptr);
-    void applyNegativeFilter(QImage& image, QProgressDialog* progress = nullptr);
-    void applyPastelFilter(QImage& image, QProgressDialog* progress = nullptr);
-    void applyVintageFilter(QImage& image, QProgressDialog* progress = nullptr);
+    void processImagePixels(QImage& image, QProgressDialog* progress, int filterNumber);
 
     // Watermark positioning
     QPoint calculateWatermarkPosition(const QSize& imageSize, const QSize& watermarkSize);

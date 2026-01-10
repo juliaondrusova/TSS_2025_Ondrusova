@@ -82,6 +82,7 @@ bool PhotoMetadataManager::loadFromFile(const QString& filePath)
         return false;
 
 	m_metadata.clear(); // Clear existing metadata
+
 	for (const auto& val : doc.object()["photos"].toArray()) // Load each photo entry
     {
         const PhotoData data = PhotoData::fromJson(val.toObject());
@@ -103,9 +104,7 @@ bool PhotoMetadataManager::saveToFile(const QString& filePath)
 	for (const auto& data : m_metadata) // Serialize each PhotoData
         photoArray.append(data.toJson());
 
-    const QJsonObject root{
-        {"photos", photoArray}
-    };
+    const QJsonObject root{ {"photos", photoArray} };
 
     QFile file(path);
 	if (!file.open(QIODevice::WriteOnly)) // Cannot open file for writing
