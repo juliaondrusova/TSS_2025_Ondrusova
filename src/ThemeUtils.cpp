@@ -185,6 +185,23 @@ namespace ThemeUtils {
                     selection-color: #ffffff;
                 }
 
+                QHeaderView {
+                    background-color: #0f0f0f;
+                    border: none;
+                }              
+             
+                QTableView::indicator:checked {
+                    background-color: #dc2626;
+                    border: 3px solid #f5f5f5;
+                    border-radius: 4px;
+                }
+
+                QTableView::indicator:unchecked {
+                    background-color: #1a1a1a;
+                    border: 2px solid #4a4a4a;
+                    border-radius: 4px;
+                }
+
             )");
         }
         else {
@@ -352,6 +369,23 @@ namespace ThemeUtils {
                     border: 1px solid #e2e8f0;
                     selection-background-color: #dc2626;
                     selection-color: #ffffff;
+                }
+
+                QHeaderView {
+                    background-color: #ffffff;
+                    border: none;
+                }
+
+                QTableView::indicator:checked {
+                    background-color: #ffffff; 
+                    border: 4px solid #dc2626;
+                    border-radius: 4px;
+                }
+
+                QTableView::indicator:unchecked {
+                    background-color: #1a1a1a;
+                    border: 2px solid #333333;
+                    border-radius: 4px;
                 }
 
             )");

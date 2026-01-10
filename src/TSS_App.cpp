@@ -53,14 +53,20 @@ TSS_App::TSS_App(QWidget* parent)
     ui.dateToEdit->installEventFilter(this);
 
     // Placeholder label for no matching photos
-    m_placeholderLabel = new QLabel(
-        "No photos match your current filters.\nTry adjusting filter settings.",
-        ui.tableView
-    );
+    m_placeholderLabel = new QLabel(ui.tableView->viewport());
     m_placeholderLabel->setAlignment(Qt::AlignCenter);
-    m_placeholderLabel->resize(ui.tableView->viewport()->size());
-    m_placeholderLabel->setStyleSheet("font-size: 16px");
     m_placeholderLabel->hide();
+
+    QPixmap placeholderPixmap(QCoreApplication::applicationDirPath() + "/resources/no_photos_placeholder.png");
+
+    // Natahneme ho na viewport tabu¾ky
+    QSize viewportSize = ui.tableView->viewport()->size();
+    m_placeholderLabel->setPixmap(placeholderPixmap.scaled(
+        viewportSize,
+        Qt::KeepAspectRatio,
+        Qt::SmoothTransformation
+    ));
+    m_placeholderLabel->resize(viewportSize);
 
     // Connect buttons and actions
     connect(ui.btnImport, &QPushButton::clicked, this, &TSS_App::importPhotos);
@@ -398,12 +404,13 @@ void TSS_App::toggleDarkMode()
 
 bool TSS_App::eventFilter(QObject* obj, QEvent* event)
 {
+  
     // Check if Enter/Return was pressed in filter inputs
     if (event->type() == QEvent::KeyPress)
     {
         QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
 
-        //
+        
         if (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter)
         {
             // Check if the object is one of our filter inputs

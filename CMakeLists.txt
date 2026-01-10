@@ -51,6 +51,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/s
 deploy_qt_for_target(${PROJECT_NAME})
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
 
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_SOURCE_DIR}/resources"
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources
+    COMMENT "Copying resources folder to build directory"
+)
 # =====================================================
 # 2) Testy
 # =====================================================
