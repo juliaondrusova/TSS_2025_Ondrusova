@@ -161,7 +161,7 @@ public:
      * The thumbnail is cached internally and can be retrieved using preview().
      * This function does not modify the original image file.
      */
-    void generatePreview(int size = 90);
+    void generatePreview(int size = 75);
 
     /**
      * @brief Sets a custom edited version of the photo.

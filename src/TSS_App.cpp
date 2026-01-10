@@ -23,7 +23,7 @@ TSS_App::TSS_App(QWidget* parent)
     ui.tableView->setEditTriggers(QAbstractItemView::DoubleClicked | QAbstractItemView::SelectedClicked);
     ui.tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui.tableView->verticalHeader()->hide();
-    ui.tableView->verticalHeader()->setDefaultSectionSize(70);
+    ui.tableView->verticalHeader()->setDefaultSectionSize(75);
 
     // Enable sorting
     ui.tableView->setSortingEnabled(true);
@@ -32,7 +32,7 @@ TSS_App::TSS_App(QWidget* parent)
     ui.tableView->sortByColumn(PhotoTableModel::DateTime, Qt::DescendingOrder);
 
     // Set column widths
-    ui.tableView->setColumnWidth(PhotoTableModel::Preview, 110);
+    ui.tableView->setColumnWidth(PhotoTableModel::Preview, 60);
     ui.tableView->setColumnWidth(PhotoTableModel::Name, 245);
     ui.tableView->setColumnWidth(PhotoTableModel::Tag, 75);
     ui.tableView->setColumnWidth(PhotoTableModel::Rating, 95);

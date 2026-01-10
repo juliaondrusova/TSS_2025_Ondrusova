@@ -380,6 +380,7 @@ QVariant PhotoTableModel::getDisplayText(const Photo& photo, int column) const
     }
 }
 
+
 QVariant PhotoTableModel::getDecoration(const Photo& photo, int column) const 
 {
 	// Preview column shows the photo thumbnail
@@ -394,13 +395,13 @@ QVariant PhotoTableModel::getDecoration(const Photo& photo, int column) const
         if (displayPixmap.isNull()) 
         {
             displayPixmap = QPixmap(photo.filePath()).scaled(
-                90, 90, Qt::KeepAspectRatio, Qt::SmoothTransformation
+                62, 62, Qt::KeepAspectRatio, Qt::SmoothTransformation
             );
         }
 		else  // Scale existing pixmap
         {
             displayPixmap = displayPixmap.scaled(
-                90, 90, Qt::KeepAspectRatio, Qt::SmoothTransformation
+                62, 62, Qt::KeepAspectRatio, Qt::SmoothTransformation
             );
         }
 
@@ -416,6 +417,8 @@ QVariant PhotoTableModel::getDecoration(const Photo& photo, int column) const
 
     return QVariant();
 }
+
+
 
 
 QVariant PhotoTableModel::getTooltip(const Photo& photo, int column) const 
