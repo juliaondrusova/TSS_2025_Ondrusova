@@ -44,7 +44,10 @@ PhotoEditorDialog::PhotoEditorDialog(Photo* photo, QWidget* parent)
     m_activeFilter(0),
     m_watermarkOpacity(DEFAULT_WATERMARK_OPACITY),
     m_watermarkPosition(DEFAULT_WATERMARK_POSITION),
-    m_temperature(0)
+    m_temperature(0),
+    m_red(0),
+    m_green(0),
+    m_blue(0)
 {
     setWindowTitle("Photo Editor");
     resize(900, 700);
@@ -174,6 +177,9 @@ void PhotoEditorDialog::createAdjustmentPanel(QVBoxLayout* layout)
     createAdjustmentSlider("Contrast", contrastSlider, contrastValue, adjustLayout);
     createAdjustmentSlider("Saturation", saturationSlider, saturationValue, adjustLayout);
     createAdjustmentSlider("Temperature", temperatureSlider, temperatureValue, adjustLayout);
+    createAdjustmentSlider("Red", redSlider, redValue, adjustLayout);
+    createAdjustmentSlider("Green", greenSlider, greenValue, adjustLayout);
+    createAdjustmentSlider("Blue", blueSlider, blueValue, adjustLayout);
 
     layout->addWidget(sectionGroup);
 }
@@ -380,6 +386,10 @@ void PhotoEditorDialog::connectSignals()
         });
 
     connectSliderWithSpinbox(temperatureSlider, temperatureValue, m_temperature);
+
+    connectSliderWithSpinbox(redSlider, redValue, m_red);
+    connectSliderWithSpinbox(greenSlider, greenValue, m_green);
+    connectSliderWithSpinbox(blueSlider, blueValue, m_blue);
 }
 
 void PhotoEditorDialog::connectSliderWithSpinbox(QSlider* slider, QSpinBox* spinbox, int& value) 
@@ -564,6 +574,7 @@ void PhotoEditorDialog::updatePreview()
     applyActiveFilter(image);
     applyWatermark(image);
     applyTemperature(image);
+    applyRGB(image);
 
     m_editedPixmap = QPixmap::fromImage(image);
 	displayScaledPreview(); // Show updated image in preview
@@ -679,7 +690,9 @@ void PhotoEditorDialog::resetChanges()
     m_watermarkOpacity = DEFAULT_WATERMARK_OPACITY;
     m_watermarkPosition = DEFAULT_WATERMARK_POSITION;
     m_temperature = 0;
-    temperatureSlider->setValue(DEFAULT_ADJUSTMENT);
+	m_red = 0;
+	m_green = 0;
+	m_blue = 0;
 
     // Reset UI controls
     brightnessSlider->setValue(DEFAULT_ADJUSTMENT);
@@ -688,6 +701,10 @@ void PhotoEditorDialog::resetChanges()
     filterCombo->setCurrentIndex(0);
     watermarkOpacitySlider->setValue(DEFAULT_WATERMARK_OPACITY);
     watermarkPositionCombo->setCurrentIndex(DEFAULT_WATERMARK_POSITION);
+    temperatureSlider->setValue(DEFAULT_ADJUSTMENT);
+    redSlider->setValue(DEFAULT_ADJUSTMENT);
+    greenSlider->setValue(DEFAULT_ADJUSTMENT);
+    blueSlider->setValue(DEFAULT_ADJUSTMENT);
 
     // Reload original image
     m_originalPixmap = QPixmap(m_originalPhoto.filePath());
@@ -904,6 +921,30 @@ void PhotoEditorDialog::applyTemperature(QImage& image)
             int b = std::clamp(int(color.blue() - 30 * factor), 0, 255);
 
             line[x] = qRgb(r, color.green(), b);
+        }
+    }
+}
+
+
+void PhotoEditorDialog::applyRGB(QImage& image)
+{
+    if (m_red == 0 && m_green == 0 && m_blue == 0) return;
+
+    // Convert -100..100 to 0.0..2.0 multiplier
+    double rFactor = 1.0 + (m_red / 100.0);    // -100 -> 0.0, 0 -> 1.0, +100 -> 2.0
+    double gFactor = 1.0 + (m_green / 100.0);
+    double bFactor = 1.0 + (m_blue / 100.0);
+
+    for (int y = 0; y < image.height(); y++) {
+        QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y));
+        for (int x = 0; x < image.width(); x++) {
+            QColor color = QColor::fromRgb(line[x]);
+
+            int r = std::clamp(int(color.red() * rFactor), 0, 255);
+            int g = std::clamp(int(color.green() * gFactor), 0, 255);
+            int b = std::clamp(int(color.blue() * bFactor), 0, 255);
+
+            line[x] = qRgb(r, g, b);
         }
     }
 }

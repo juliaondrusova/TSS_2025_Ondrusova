@@ -194,4 +194,21 @@ private:
     QSlider* temperatureSlider;
     QSpinBox* temperatureValue;
     void applyTemperature(QImage& image);
+
+
+    // V private members:
+    int m_red;
+    int m_green;
+    int m_blue;
+
+    QSlider* redSlider;
+    QSlider* greenSlider;
+    QSlider* blueSlider;
+
+    QSpinBox* redValue;
+    QSpinBox* greenValue;
+    QSpinBox* blueValue;
+
+    // V private functions:
+    void applyRGB(QImage& image);
 };
