@@ -15,6 +15,7 @@
 #include <QPainter>
 #include <QProgressDialog>
 #include <QApplication>
+#include <QScrollArea>
 
 // Constants
 namespace {
@@ -42,7 +43,8 @@ PhotoEditorDialog::PhotoEditorDialog(Photo* photo, QWidget* parent)
     m_rubberBand(nullptr),
     m_activeFilter(0),
     m_watermarkOpacity(DEFAULT_WATERMARK_OPACITY),
-    m_watermarkPosition(DEFAULT_WATERMARK_POSITION)
+    m_watermarkPosition(DEFAULT_WATERMARK_POSITION),
+    m_temperature(0)
 {
     setWindowTitle("Photo Editor");
     resize(900, 700);
@@ -56,174 +58,287 @@ PhotoEditorDialog::PhotoEditorDialog(Photo* photo, QWidget* parent)
 
 	buildUI(); // Setup UI components
 	connectSignals(); // Connect signals and slots
-	updatePreview(); // Initial preview update
+
+    // Schedule update after the constructor finishes to ensure correct label dimensions.
+    QTimer::singleShot(0, this, [this]() {
+        updatePreview();
+        });
 }
 
 // --- UI Construction ---
 
-void PhotoEditorDialog::buildUI() 
+void PhotoEditorDialog::buildUI()
 {
+    setFixedSize(1000, 650);
+
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
+    mainLayout->setSpacing(0);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
 
-	createPreviewArea(mainLayout); // Preview area at the top
-	createToolbar(mainLayout); // Toolbar with basic tools
+    // ================= CONTENT =================
+    QHBoxLayout* contentLayout = new QHBoxLayout();
+    contentLayout->setSpacing(0);
+    contentLayout->setContentsMargins(0, 0, 0, 0);
 
-    // Two-column layout for adjustments and filters
-    QHBoxLayout* middleLayout = new QHBoxLayout();
+    // ---------- LEFT PANEL ----------
+    QWidget* leftPanel = new QWidget(this);
 
-	// Left column: Adjustments
-    QVBoxLayout* leftColumn = new QVBoxLayout();
-    createAdjustmentPanel(leftColumn);
-    middleLayout->addLayout(leftColumn);
+    QVBoxLayout* leftLayout = new QVBoxLayout(leftPanel);
+    leftLayout->setContentsMargins(20, 20, 20, 20);
+    leftLayout->setSpacing(12);
 
-    // Right column: Filters and Watermark
-    QVBoxLayout* rightColumn = new QVBoxLayout();
-    createFilterPanel(rightColumn);
-    createWatermarkPanel(rightColumn);
-    middleLayout->addLayout(rightColumn);
+    createPreviewArea(leftLayout);
+    createToolbar(leftLayout);
 
-	// Add middle layout to main layout
-    mainLayout->addLayout(middleLayout);
-    createActionButtons(mainLayout);
+    contentLayout->addWidget(leftPanel, 3);
+
+    // ---------- RIGHT PANEL ----------
+    QWidget* rightPanel = new QWidget(this);
+    rightPanel->setFixedWidth(340);
+
+    QVBoxLayout* rightLayout = new QVBoxLayout(rightPanel);
+    rightLayout->setSpacing(0);
+    rightLayout->setContentsMargins(0, 5, 0, 5);
+
+    QScrollArea* scrollArea = new QScrollArea(rightPanel);
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+    QWidget* scrollContent = new QWidget();
+    QVBoxLayout* scrollLayout = new QVBoxLayout(scrollContent);
+    scrollLayout->setSpacing(20);
+    scrollLayout->setContentsMargins(20, 20, 20, 20);
+
+    createAdjustmentPanel(scrollLayout);
+    createFilterPanel(scrollLayout);
+    createWatermarkPanel(scrollLayout);
+
+    scrollLayout->addStretch();
+    scrollArea->setWidget(scrollContent);
+
+    rightLayout->addWidget(scrollArea);
+    createActionButtons(rightLayout);
+
+    contentLayout->addWidget(rightPanel);
+    mainLayout->addLayout(contentLayout);
 }
 
-void PhotoEditorDialog::createPreviewArea(QVBoxLayout* layout) 
+
+void PhotoEditorDialog::createPreviewArea(QVBoxLayout* layout)
 {
     previewLabel = new QLabel(this);
     previewLabel->setAlignment(Qt::AlignCenter);
-    previewLabel->setMinimumSize(600, 400);
-    previewLabel->setScaledContents(false);
+    previewLabel->setMinimumSize(400, 400);
     previewLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-	previewLabel->setMouseTracking(true); // Enable mouse tracking for crop
-
-    layout->addWidget(previewLabel);
+    previewLabel->setStyleSheet(
+        "QLabel {"
+        "   background-color: rgba(0, 0, 0, 15);"
+        "   border: 1px solid rgba(128, 128, 128, 40);"
+        "   border-radius: 20px;"
+        "}"
+    );
+    layout->addWidget(previewLabel, 1);
 }
 
-void PhotoEditorDialog::createToolbar(QVBoxLayout* layout) 
+void PhotoEditorDialog::createToolbar(QVBoxLayout* layout)
 {
     QHBoxLayout* toolbar = new QHBoxLayout();
+    toolbar->setSpacing(8);
 
     cropBtn = new QPushButton("Crop", this);
-	cropBtn->setCheckable(true); // Toggle button for crop mode
+    cropBtn->setCheckable(true);
 
     rotateLeftBtn = new QPushButton("Rotate Left", this);
     rotateRightBtn = new QPushButton("Rotate Right", this);
+    resetBtn = new QPushButton("Reset", this);
 
     toolbar->addWidget(cropBtn);
     toolbar->addWidget(rotateLeftBtn);
     toolbar->addWidget(rotateRightBtn);
-	toolbar->addStretch(); // Push buttons to the left
+    toolbar->addWidget(resetBtn);
+    toolbar->addStretch();
 
     layout->addLayout(toolbar);
 }
 
-void PhotoEditorDialog::createAdjustmentPanel(QVBoxLayout* layout) 
+void PhotoEditorDialog::createAdjustmentPanel(QVBoxLayout* layout)
 {
-    QGroupBox* group = new QGroupBox("Adjustments", this);
-    QVBoxLayout* groupLayout = new QVBoxLayout(group);
+    // Zmena QWidget na QGroupBox
+    QGroupBox* sectionGroup = new QGroupBox("ADJUSTMENTS", this);
+    QVBoxLayout* adjustLayout = new QVBoxLayout(sectionGroup);
 
-	// sliders with spinboxes for brightness, contrast, saturation
-    createSliderWithSpinbox("Brightness:", brightnessSlider, brightnessValue, groupLayout);
-    createSliderWithSpinbox("Contrast:", contrastSlider, contrastValue, groupLayout);
-    createSliderWithSpinbox("Saturation:", saturationSlider, saturationValue, groupLayout);
+    adjustLayout->setSpacing(10);
+    adjustLayout->setContentsMargins(0, 0, 0, 0);
 
-    layout->addWidget(group);
+    createAdjustmentSlider("Brightness", brightnessSlider, brightnessValue, adjustLayout);
+    createAdjustmentSlider("Contrast", contrastSlider, contrastValue, adjustLayout);
+    createAdjustmentSlider("Saturation", saturationSlider, saturationValue, adjustLayout);
+    createAdjustmentSlider("Temperature", temperatureSlider, temperatureValue, adjustLayout);
+
+    layout->addWidget(sectionGroup);
 }
 
-void PhotoEditorDialog::createSliderWithSpinbox(const QString& label, QSlider*& slider, QSpinBox*& spinbox, QVBoxLayout* layout) 
+void PhotoEditorDialog::createAdjustmentSlider(
+    const QString& label,
+    QSlider*& slider,
+    QSpinBox*& spinbox,
+    QVBoxLayout* layout)
 {
-    QHBoxLayout* row = new QHBoxLayout();
-    row->addWidget(new QLabel(label, this));
+    QVBoxLayout* block = new QVBoxLayout();
+    block->setSpacing(8);
 
-    slider = new QSlider(Qt::Horizontal, this);
-	slider->setRange(MIN_ADJUSTMENT, MAX_ADJUSTMENT); // -100 to 100
-	slider->setValue(DEFAULT_ADJUSTMENT); // default 0
+    QHBoxLayout* header = new QHBoxLayout();
+    QLabel* lbl = new QLabel(label, this);
 
     spinbox = new QSpinBox(this);
-	spinbox->setRange(MIN_ADJUSTMENT, MAX_ADJUSTMENT); // -100 to 100
-	spinbox->setValue(DEFAULT_ADJUSTMENT); // default 0
+    spinbox->setRange(MIN_ADJUSTMENT, MAX_ADJUSTMENT);
+    spinbox->setValue(DEFAULT_ADJUSTMENT);
+    spinbox->setButtonSymbols(QAbstractSpinBox::NoButtons);
 
-	row->addWidget(slider, 3); // slider takes 3/4 of space
-	row->addWidget(spinbox, 1); // spinbox takes 1/4 of space
-    layout->addLayout(row);
+    spinbox->setFocusPolicy(Qt::StrongFocus);
+    spinbox->installEventFilter(this);
+
+    header->addWidget(lbl);
+    header->addStretch();
+    header->addWidget(spinbox);
+
+    slider = new QSlider(Qt::Horizontal, this);
+    slider->setRange(MIN_ADJUSTMENT, MAX_ADJUSTMENT);
+    slider->setValue(DEFAULT_ADJUSTMENT);
+    slider->setFocusPolicy(Qt::StrongFocus);
+    slider->installEventFilter(this);
+
+    block->addLayout(header);
+    block->addWidget(slider);
+    layout->addLayout(block);
 }
 
-void PhotoEditorDialog::createFilterPanel(QVBoxLayout* layout) 
-{
-    QGroupBox* group = new QGroupBox("Filters", this);
-    QHBoxLayout* groupLayout = new QHBoxLayout(group);
 
-	groupLayout->addWidget(new QLabel("Preset Filter:", this)); // Filter selector
+bool PhotoEditorDialog::eventFilter(QObject* obj, QEvent* event)
+{
+    if (event->type() == QEvent::Wheel) {
+        if (qobject_cast<QSlider*>(obj) ||
+            qobject_cast<QSpinBox*>(obj) ||
+            qobject_cast<QComboBox*>(obj))
+        {
+            event->ignore(); 
+            return true; 
+        }
+    }
+    return QDialog::eventFilter(obj, event);
+}
+
+
+void PhotoEditorDialog::resizeEvent(QResizeEvent* event)
+{
+    QDialog::resizeEvent(event);
+
+    if (!m_editedPixmap.isNull()) {
+        previewLabel->setPixmap(
+            m_editedPixmap.scaled(
+                previewLabel->size(),
+                Qt::KeepAspectRatio,
+                Qt::SmoothTransformation
+            )
+        );
+    }
+}
+
+void PhotoEditorDialog::createSliderWithSpinbox(const QString& label, QSlider*& slider, QSpinBox*& spinbox, QVBoxLayout* layout)
+{
+    createAdjustmentSlider(label, slider, spinbox, layout);
+}
+
+void PhotoEditorDialog::createFilterPanel(QVBoxLayout* layout)
+{
+    // Zmena QWidget na QGroupBox
+    QGroupBox* filterGroup = new QGroupBox("FILTER PRESETS", this);
+    QVBoxLayout* filterLayout = new QVBoxLayout(filterGroup);
+
+    filterLayout->setSpacing(10);
+    filterLayout->setContentsMargins(0, 0, 0, 0);
+
+    QLabel* filterLabel = new QLabel("Preset Filter", this);
+    filterLayout->addWidget(filterLabel);
 
     filterCombo = new QComboBox(this);
-	filterCombo->addItems({ "None", "Grayscale", "Sepia", "Negative", "Pastel", "Vintage" }); // Predefined filters
+    filterCombo->addItems({ "None", "Grayscale", "Sepia", "Negative", "Pastel", "Vintage" });
+    filterCombo->setFixedHeight(38);
 
-    groupLayout->addWidget(filterCombo);
-    groupLayout->addStretch();
+    filterCombo->setFocusPolicy(Qt::StrongFocus);
+    filterCombo->installEventFilter(this);
 
-    layout->addWidget(group);
+    filterLayout->addWidget(filterCombo);
+
+    layout->addWidget(filterGroup);
 }
 
-void PhotoEditorDialog::createWatermarkPanel(QVBoxLayout* layout) 
+void PhotoEditorDialog::createWatermarkPanel(QVBoxLayout* layout)
 {
-    QGroupBox* group = new QGroupBox("Watermark", this);
-    QVBoxLayout* groupLayout = new QVBoxLayout(group);
+    // Zmena QWidget na QGroupBox
+    QGroupBox* watermarkGroup = new QGroupBox("WATERMARK", this);
+    QVBoxLayout* watermarkLayout = new QVBoxLayout(watermarkGroup);
 
-    // Select watermark button
-    watermarkBtn = new QPushButton("Select Watermark Image", this);
-    groupLayout->addWidget(watermarkBtn);
+    watermarkLayout->setSpacing(10);
+    watermarkLayout->setContentsMargins(0, 0, 0, 0);
 
-    // Position selector
-    QHBoxLayout* posLayout = new QHBoxLayout();
-    posLayout->addWidget(new QLabel("Position:", this));
+    watermarkBtn = new QPushButton("+ Select Watermark Image", this);
+    watermarkBtn->setFixedHeight(40);
+    watermarkLayout->addWidget(watermarkBtn);
 
+    watermarkLayout->addWidget(new QLabel("Position", this));
     watermarkPositionCombo = new QComboBox(this);
-	watermarkPositionCombo->addItems({ "Top Left", "Top Right", "Bottom Left", "Bottom Right", "Center" }); // Preddefined positions
-	watermarkPositionCombo->setCurrentIndex(DEFAULT_WATERMARK_POSITION); // Default to Bottom Right
-    
-    posLayout->addWidget(watermarkPositionCombo);
-    groupLayout->addLayout(posLayout);
+    watermarkPositionCombo->addItems({ "Top Left", "Top Right", "Bottom Left", "Bottom Right", "Center" });
+    watermarkPositionCombo->setCurrentIndex(DEFAULT_WATERMARK_POSITION);
+    watermarkPositionCombo->setFixedHeight(38);
+    watermarkPositionCombo->setFocusPolicy(Qt::StrongFocus);
+    watermarkPositionCombo->installEventFilter(this);
+    watermarkLayout->addWidget(watermarkPositionCombo);
 
-    // Opacity slider
-    QHBoxLayout* opacityLayout = new QHBoxLayout();
-    opacityLayout->addWidget(new QLabel("Opacity:", this));
-
+    watermarkLayout->addWidget(new QLabel("Opacity", this));
+    QHBoxLayout* opacityRow = new QHBoxLayout();
     watermarkOpacitySlider = new QSlider(Qt::Horizontal, this);
     watermarkOpacitySlider->setRange(0, 100);
-	watermarkOpacitySlider->setValue(DEFAULT_WATERMARK_OPACITY); // Default opacity
+    watermarkOpacitySlider->setValue(DEFAULT_WATERMARK_OPACITY);
+    watermarkOpacitySlider->setFocusPolicy(Qt::StrongFocus);
+    watermarkOpacitySlider->installEventFilter(this);
 
-    QSpinBox* opacitySpin = new QSpinBox(this);
-    opacitySpin->setRange(0, 100);
-	opacitySpin->setValue(DEFAULT_WATERMARK_OPACITY); // Default opacity
-	opacitySpin->setSuffix("%"); // Show percentage
+    QLabel* percentLabel = new QLabel("70%", this);
+    percentLabel->setFixedWidth(40);
+    percentLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
-    connect(watermarkOpacitySlider, &QSlider::valueChanged, opacitySpin, &QSpinBox::setValue);
-    connect(opacitySpin, QOverload<int>::of(&QSpinBox::valueChanged),
-        watermarkOpacitySlider, &QSlider::setValue);
+    connect(watermarkOpacitySlider, &QSlider::valueChanged, [percentLabel](int val) {
+        percentLabel->setText(QString("%1%").arg(val));
+        });
 
-	opacityLayout->addWidget(watermarkOpacitySlider, 3); // slider takes 3/4 of space
-	opacityLayout->addWidget(opacitySpin, 1); // spinbox takes 1/4 of space
+    opacityRow->addWidget(watermarkOpacitySlider);
+    opacityRow->addWidget(percentLabel);
+    watermarkLayout->addLayout(opacityRow);
 
-    groupLayout->addLayout(opacityLayout);
-    layout->addWidget(group);
+    layout->addWidget(watermarkGroup);
 }
-
-void PhotoEditorDialog::createActionButtons(QVBoxLayout* layout) 
+ 
+void PhotoEditorDialog::createActionButtons(QVBoxLayout* layout)
 {
-    QHBoxLayout* buttonLayout = new QHBoxLayout();
+    QWidget* buttonWidget = new QWidget(this);
+    buttonWidget->setFixedHeight(70);
 
-	// Action buttons: Reset, Cancel, Apply
-    resetBtn = new QPushButton("Reset", this);
+    QHBoxLayout* buttonLayout = new QHBoxLayout(buttonWidget);
+    buttonLayout->setSpacing(12);
+    buttonLayout->setContentsMargins(20, 12, 20, 12);
+
     cancelBtn = new QPushButton("Cancel", this);
-    applyBtn = new QPushButton("Apply", this);
+    cancelBtn->setFixedHeight(44);
 
-    buttonLayout->addWidget(resetBtn);
-	buttonLayout->addStretch(); // Push Cancel and Apply to the right
+    applyBtn = new QPushButton("Apply Changes", this);
+    applyBtn->setFixedHeight(44);
+   
     buttonLayout->addWidget(cancelBtn);
     buttonLayout->addWidget(applyBtn);
 
-    layout->addLayout(buttonLayout);
+    layout->addWidget(buttonWidget);
 }
+
 
 // --- Signal Connections ---
 
@@ -263,6 +378,8 @@ void PhotoEditorDialog::connectSignals()
         m_watermarkOpacity = value;
         updateTimer->start();
         });
+
+    connectSliderWithSpinbox(temperatureSlider, temperatureValue, m_temperature);
 }
 
 void PhotoEditorDialog::connectSliderWithSpinbox(QSlider* slider, QSpinBox* spinbox, int& value) 
@@ -280,13 +397,13 @@ void PhotoEditorDialog::connectSliderWithSpinbox(QSlider* slider, QSpinBox* spin
 
 void PhotoEditorDialog::rotateLeft() 
 {
-    m_rotation = (m_rotation - 90 + 360) % 360; 
+    m_rotation = (m_rotation + 90 + 360) % 360; 
     updatePreview();
 }
 
 void PhotoEditorDialog::rotateRight() 
 {
-    m_rotation = (m_rotation + 90) % 360;
+    m_rotation = (m_rotation - 90) % 360;
     updatePreview();
 }
 
@@ -308,51 +425,61 @@ void PhotoEditorDialog::cropClicked(bool checked)
 
 void PhotoEditorDialog::mousePressEvent(QMouseEvent* event)
 {
-    // Check if clicking on preview (not in crop mode)
-    if (previewLabel->underMouse() && !m_cropMode)
-    {
-        m_showingOriginal = true;
-        QPixmap originalFromFile = QPixmap(m_originalPhoto.filePath());
-        QPixmap scaled = originalFromFile.scaled(previewLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    // Prepoèítame pozíciu kliknutia relatívnu k previewLabel
+    QPoint posInLabel = previewLabel->mapFromGlobal(event->globalPos());
 
-        previewLabel->setPixmap(scaled);
+    // Kliknutie je vo vnútri labelu
+    if (previewLabel->rect().contains(posInLabel))
+    {
+        if (m_cropMode)
+        {
+            // Spustíme crop
+            m_cropOrigin = posInLabel;
+
+            if (!m_rubberBand)
+                m_rubberBand = new QRubberBand(QRubberBand::Rectangle, previewLabel);
+
+            m_rubberBand->setGeometry(QRect(m_cropOrigin, QSize()));
+            m_rubberBand->show();
+        }
+        else
+        {
+            // Zobrazenie pôvodného obrázka
+            QPixmap originalFromFile(m_originalPhoto.filePath());
+            QPixmap scaled = originalFromFile.scaled(
+                previewLabel->size(),
+                Qt::KeepAspectRatio,
+                Qt::SmoothTransformation
+            );
+
+            previewLabel->setPixmap(scaled);
+            m_showingOriginal = true;
+        }
+
         event->accept();
         return;
     }
 
-    // Only start cropping if crop mode is active and mouse is over the image
-    if (m_cropMode && previewLabel->underMouse())
-    {
-        // Save the position where the user started dragging (relative to the label)
-        m_cropOrigin = event->pos() - previewLabel->pos();
-
-        if (!m_rubberBand) // Create the rubber band if it does not already exist
-            m_rubberBand = new QRubberBand(QRubberBand::Rectangle, previewLabel);
-
-        // Initialize the rectangle (with 0 size) and make it visible
-        m_rubberBand->setGeometry(QRect(m_cropOrigin, QSize()));
-        m_rubberBand->show();
-    }
-
-    // Pass event to base class
+    // Ak klik nie je na obrázku, spracujeme default
     QDialog::mousePressEvent(event);
 }
 
+
 void PhotoEditorDialog::mouseMoveEvent(QMouseEvent* event)
 {
-    // If user is dragging and crop rectangle is visible, resize it
     if (m_cropMode && m_rubberBand && m_rubberBand->isVisible())
     {
-        // Current mouse position relative to label
-        QPoint currentPos = event->pos() - previewLabel->pos();
+        QPoint currentPos = previewLabel->mapFromGlobal(event->globalPos());
 
-		QRect rect(m_cropOrigin, currentPos); // Create rectangle from origin to current position
-		m_rubberBand->setGeometry(rect.normalized()); // need to normalize to handle negative widths/heights
+        // Obmedzíme výber len na plochu labelu, aby RubberBand "neutiekol" von
+        currentPos.setX(qBound(0, currentPos.x(), previewLabel->width()));
+        currentPos.setY(qBound(0, currentPos.y(), previewLabel->height()));
+
+        m_rubberBand->setGeometry(QRect(m_cropOrigin, currentPos).normalized());
     }
-
-    // Pass event to base class
     QDialog::mouseMoveEvent(event);
 }
+
 
 void PhotoEditorDialog::mouseReleaseEvent(QMouseEvent* event)
 {
@@ -436,6 +563,7 @@ void PhotoEditorDialog::updatePreview()
     applySaturation(image);
     applyActiveFilter(image);
     applyWatermark(image);
+    applyTemperature(image);
 
     m_editedPixmap = QPixmap::fromImage(image);
 	displayScaledPreview(); // Show updated image in preview
@@ -550,6 +678,8 @@ void PhotoEditorDialog::resetChanges()
     m_watermarkPixmap = QPixmap();
     m_watermarkOpacity = DEFAULT_WATERMARK_OPACITY;
     m_watermarkPosition = DEFAULT_WATERMARK_POSITION;
+    m_temperature = 0;
+    temperatureSlider->setValue(DEFAULT_ADJUSTMENT);
 
     // Reset UI controls
     brightnessSlider->setValue(DEFAULT_ADJUSTMENT);
@@ -756,4 +886,24 @@ QPoint PhotoEditorDialog::calculateWatermarkPosition(const QSize& imageSize, con
     }
 
 	return QPoint(x, y); // Return calculated position
+}
+
+
+void PhotoEditorDialog::applyTemperature(QImage& image)
+{
+    if (m_temperature == 0) return;
+
+    double factor = m_temperature / 100.0; // -1.0 to +1.0
+
+    for (int y = 0; y < image.height(); y++) {
+        QRgb* line = reinterpret_cast<QRgb*>(image.scanLine(y));
+        for (int x = 0; x < image.width(); x++) {
+            QColor color = QColor::fromRgb(line[x]);
+
+            int r = std::clamp(int(color.red() + 30 * factor), 0, 255);
+            int b = std::clamp(int(color.blue() - 30 * factor), 0, 255);
+
+            line[x] = qRgb(r, color.green(), b);
+        }
+    }
 }

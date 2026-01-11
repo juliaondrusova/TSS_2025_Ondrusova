@@ -119,6 +119,11 @@ private:
     void createActionButtons(QVBoxLayout* layout);
     void createSliderWithSpinbox(const QString& label, QSlider*& slider, QSpinBox*& spinbox, QVBoxLayout* layout);
 
+    void createAdjustmentSlider(const QString& label, QSlider*& slider, QSpinBox*& spinbox, QVBoxLayout* layout);
+
+    bool eventFilter(QObject* obj, QEvent* event);
+    void resizeEvent(QResizeEvent* event);
+
     void connectSignals();
     void connectSliderWithSpinbox(QSlider* slider, QSpinBox* spinbox, int& value);
 
@@ -183,4 +188,10 @@ private:
     int m_watermarkPosition;
 
     bool m_showingOriginal;
+
+
+    int m_temperature;
+    QSlider* temperatureSlider;
+    QSpinBox* temperatureValue;
+    void applyTemperature(QImage& image);
 };

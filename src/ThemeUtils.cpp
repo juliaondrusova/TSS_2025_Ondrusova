@@ -25,12 +25,12 @@ namespace ThemeUtils {
                 }
                 
                 QScrollArea {
-                    background-color: #111827;
+                    background-color: transparent;
                     border: none;
                 }
                 
-                QScrollArea > QWidget {
-                    background-color: #111827;
+                QScrollArea QWidget {
+                    background-color: transparent;
                 }
                 
                 QTableView {
@@ -72,7 +72,7 @@ namespace ThemeUtils {
                     letter-spacing: 0.5px;
                 }
                 
-                QPushButton {
+                QPushButton,QScrollArea QPushButton {
                     background-color: #4f46e5;
                     color: #ffffff;
                     border: none;
@@ -81,20 +81,26 @@ namespace ThemeUtils {
                     font-weight: 600;
                     font-size: 10pt;
                 }
-                
-                QPushButton:hover {
+              
+                QPushButton:hover,QScrollArea QPushButton:hover {
                     background-color: #6366f1;
                 }
                 
-                QPushButton:pressed {
+                QPushButton:pressed, QScrollArea QPushButton:pressed {
                     background-color: #4338ca;
                 }
                 
-                QPushButton:disabled {
+                QPushButton:disabled, QScrollArea QPushButton:disaabled {
                     background-color: #374151;
                     color: #6b7280;
                 }
                 
+                QPushButton:checked, QScrollArea QPushButton:checked {
+                    background-color: #3730a3; /* Svieža zelená pre aktívny stav */
+                    color: #ffffff;
+                    border: 1px solid #ffffff;
+                }
+
                 QLineEdit, QSpinBox, QDateEdit, QComboBox {
                     background-color: #1f2937;
                     color: #f9fafb;
@@ -225,14 +231,14 @@ namespace ThemeUtils {
                 }
                 
                 QScrollArea {
-                    background-color: #ffffff;
+                    background-color: transparent;
                     border: none;
                 }
                 
-                QScrollArea > QWidget {
-                    background-color: #ffffff;
+                QScrollArea QWidget {
+                    background-color: transparent;
                 }
-                
+
                 QTableView {
                     background-color: #f9fafb;
                     color: #111827;
@@ -273,8 +279,8 @@ namespace ThemeUtils {
                     text-transform: uppercase;
                     letter-spacing: 0.5px;
                 }
-                
-                QPushButton {
+
+                QPushButton,QScrollArea QPushButton {
                     background-color: #4f46e5;
                     color: #ffffff;
                     border: none;
@@ -284,17 +290,23 @@ namespace ThemeUtils {
                     font-size: 10pt;
                 }
                 
-                QPushButton:hover {
+                QPushButton:hover,QScrollArea QPushButton:hover {
                     background-color: #6366f1;
                 }
                 
-                QPushButton:pressed {
+                QPushButton:pressed, QScrollArea QPushButton:pressed {
                     background-color: #4338ca;
                 }
                 
-                QPushButton:disabled {
+                QPushButton:disabled QScrollArea QPushButton:disabled {
                     background-color: #e5e7eb;
                     color: #9ca3af;
+                }
+
+                QPushButton:checked, QScrollArea QPushButton:checked {
+                    background-color: #3730a3;
+                    color: #ffffff;
+                    border: 1px solid #ffffff;
                 }
                 
                 QLineEdit, QSpinBox, QDateEdit, QComboBox {
@@ -417,65 +429,6 @@ namespace ThemeUtils {
                 }
 
             )");
-        }
-
-        // Apply palette recursively
-        QList<QLabel*> labels = widget->findChildren<QLabel*>();
-        for (QLabel* label : labels) {
-            QPalette p = label->palette();
-            p.setColor(QPalette::WindowText, textColor);
-            p.setColor(QPalette::Text, textColor);
-            label->setPalette(p);
-        }
-
-        QList<QGroupBox*> groups = widget->findChildren<QGroupBox*>();
-        for (QGroupBox* group : groups) {
-            QPalette p = group->palette();
-            p.setColor(QPalette::WindowText, textColor);
-            p.setColor(QPalette::Text, textColor);
-            group->setPalette(p);
-        }
-
-        QList<QLineEdit*> lineEdits = widget->findChildren<QLineEdit*>();
-        for (QLineEdit* edit : lineEdits) {
-            QPalette p = edit->palette();
-            p.setColor(QPalette::Text, textColor);
-            p.setColor(QPalette::Base, darkMode ? QColor("#1f2937") : QColor("#f3f4f6"));
-            edit->setPalette(p);
-        }
-
-        QList<QSpinBox*> spinBoxes = widget->findChildren<QSpinBox*>();
-        for (QSpinBox* spin : spinBoxes) {
-            QPalette p = spin->palette();
-            p.setColor(QPalette::Text, textColor);
-            p.setColor(QPalette::Base, darkMode ? QColor("#1f2937") : QColor("#f3f4f6"));
-            spin->setPalette(p);
-        }
-
-        QList<QDateEdit*> dateEdits = widget->findChildren<QDateEdit*>();
-        for (QDateEdit* date : dateEdits) {
-            QPalette p = date->palette();
-            p.setColor(QPalette::Text, textColor);
-            p.setColor(QPalette::Base, darkMode ? QColor("#1f2937") : QColor("#f3f4f6"));
-            date->setPalette(p);
-        }
-
-        QList<QScrollArea*> scrollAreas = widget->findChildren<QScrollArea*>();
-        for (QScrollArea* scroll : scrollAreas) {
-            QPalette p = scroll->palette();
-            p.setColor(QPalette::Base, darkMode ? QColor("#111827") : QColor("#ffffff"));
-            p.setColor(QPalette::Window, darkMode ? QColor("#111827") : QColor("#ffffff"));
-            scroll->setPalette(p);
-
-            QList<QWidget*> allWidgets = widget->findChildren<QWidget*>();
-            for (QWidget* w : allWidgets)
-            {
-                if (!w->layout() && w->children().isEmpty())
-                {
-                    w->setStyleSheet("background: transparent; border: none;");
-                    w->setAttribute(Qt::WA_TranslucentBackground);
-                }
-            }
         }
     }
 }
