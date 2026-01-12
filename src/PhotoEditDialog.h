@@ -48,12 +48,6 @@ protected:
     void mousePressEvent(QMouseEvent* event) override;
 
     /**
-     * @brief Handles mouse move events.
-     * @param event Mouse event data.
-     */
-    void mouseMoveEvent(QMouseEvent* event) override;
-
-    /**
      * @brief Handles mouse release events.
      * @param event Mouse event data.
      */
@@ -71,12 +65,6 @@ private slots:
      * @brief Rotates the image 90° to the right.
      */
     void rotateRight();
-
-    /**
-     * @brief Enables or disables crop mode.
-     * @param checked True to enable crop mode, false to disable.
-     */
-    void cropClicked(bool checked);
 
     /**
      * @brief Updates the preview image with current adjustments and filters.
@@ -128,7 +116,6 @@ private:
     void connectSliderWithSpinbox(QSlider* slider, QSpinBox* spinbox, int& value);
 
     // Image processing
-    void applyCrop();
     void applyRotation(QImage& image);
     void applyContrast(QImage& image);
     void applySaturation(QImage& image);
@@ -169,11 +156,6 @@ private:
     QPushButton* cancelBtn;
     QTimer* updateTimer;
 
-    // Crop tool
-    bool m_cropMode;
-    QRubberBand* m_rubberBand;
-    QPoint m_cropOrigin;
-    QRect m_cropRect;
 
     // Adjustment values
     int m_rotation;
