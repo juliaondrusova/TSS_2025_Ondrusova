@@ -73,7 +73,7 @@ protected:
         backgroundRegion -= QRegion(normRect); // Subtract the crop area from the total widget area
 
 		p.setClipRegion(backgroundRegion); // Clip to the background region
-        p.fillRect(rect(), QColor(0, 0, 0, 160)); // 160 = semi-transparent black
+        p.fillRect(rect(), QColor(0, 0, 0, 150)); // 150 = semi-transparent black
 		p.setClipping(false); // Disable clipping for further drawing
 
         // Draw the white border of the crop box
@@ -315,7 +315,7 @@ CropDialog::CropDialog(const QPixmap& source, QWidget* parent)
     : QDialog(parent), m_sourcePixmap(source)
 {
     setWindowTitle("Crop Image");
-    resize(1000, 800);
+    resize(800, 600);
     buildUI();
 }
 
@@ -323,6 +323,7 @@ void CropDialog::buildUI()
 {
     // --- Main layout ---
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(24, 24, 24, 24);
 
     // --- Image display ---
     imageLabel = new QLabel(this);

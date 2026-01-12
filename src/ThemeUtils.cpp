@@ -8,7 +8,6 @@
 #include <QPushButton>
 #include <QScrollArea>
 
-
 namespace ThemeUtils {
     void setWidgetDarkMode(QWidget* widget, bool darkMode) {
         if (!widget) return;
@@ -73,7 +72,12 @@ namespace ThemeUtils {
                 }
                 
                 QPushButton,QScrollArea QPushButton {
-                    background-color: #4f46e5;
+                    background-color: #4F46E5; 
+                    background: qlineargradient(
+                        x1:0, y1:1, x2:0, y2:0, 
+                        stop:0 rgba(79, 70, 229, 255),
+                        stop:1 rgba(70, 140, 229, 255) 
+                    );
                     color: #ffffff;
                     border: none;
                     border-radius: 16px;
@@ -91,12 +95,13 @@ namespace ThemeUtils {
                 }
                 
                 QPushButton:disabled, QScrollArea QPushButton:disaabled {
+                    background: none;
                     background-color: #374151;
                     color: #6b7280;
                 }
                 
                 QPushButton:checked, QScrollArea QPushButton:checked {
-                    background-color: #3730a3; /* Svieža zelená pre aktívny stav */
+                    background-color: #3730a3;
                     color: #ffffff;
                     border: 1px solid #ffffff;
                 }
@@ -151,7 +156,12 @@ namespace ThemeUtils {
                 }
                 
                 QScrollBar::handle:vertical {
-                    background-color: #4f46e5;
+                   background-color: #4F46E5; 
+                    background: qlineargradient(
+                        x1:0, y1:1, x2:0, y2:0, 
+                        stop:0 rgba(79, 70, 229, 255),
+                        stop:1 rgba(70, 140, 229, 255) 
+                    );
                     border-radius: 4px;
                     min-height: 30px;
                 }
@@ -171,7 +181,12 @@ namespace ThemeUtils {
                 }
                 
                 QSlider::handle:horizontal {
-                    background-color: #4f46e5;
+                    background-color: #4F46E5; 
+                    background: qlineargradient(
+                        x1:0, y1:1, x2:0, y2:0, 
+                        stop:0 rgba(79, 70, 229, 255),
+                        stop:1 rgba(70, 140, 229, 255) 
+                    );
                     width: 18px;
                     height: 18px;
                     margin: -7px 0;
@@ -281,7 +296,12 @@ namespace ThemeUtils {
                 }
 
                 QPushButton,QScrollArea QPushButton {
-                    background-color: #4f46e5;
+                    background-color: #4F46E5; 
+                    background: qlineargradient(
+                        x1:0, y1:1, x2:0, y2:0, 
+                        stop:0 rgba(79, 70, 229, 255),
+                        stop:1 rgba(70, 140, 229, 255) 
+                    );
                     color: #ffffff;
                     border: none;
                     border-radius: 16px;
@@ -298,7 +318,8 @@ namespace ThemeUtils {
                     background-color: #4338ca;
                 }
                 
-                QPushButton:disabled QScrollArea QPushButton:disabled {
+                QPushButton:disabled, QScrollArea QPushButton:disabled {
+                    background: none;
                     background-color: #e5e7eb;
                     color: #9ca3af;
                 }
@@ -359,7 +380,12 @@ namespace ThemeUtils {
                 }
                 
                 QScrollBar::handle:vertical {
-                    background-color: #4f46e5;
+                    background-color: #4F46E5; 
+                    background: qlineargradient(
+                        x1:0, y1:1, x2:0, y2:0, 
+                        stop:0 rgba(79, 70, 229, 255),
+                        stop:1 rgba(70, 140, 229, 255) 
+                    );
                     border-radius: 4px;
                     min-height: 30px;
                 }
@@ -379,7 +405,12 @@ namespace ThemeUtils {
                 }
                 
                 QSlider::handle:horizontal {
-                    background-color: #4f46e5;
+                    background-color: #4F46E5; 
+                    background: qlineargradient(
+                        x1:0, y1:1, x2:0, y2:0, 
+                        stop:0 rgba(79, 70, 229, 255),
+                        stop:1 rgba(70, 140, 229, 255) 
+                    );
                     width: 18px;
                     height: 18px;
                     margin: -7px 0;
@@ -430,5 +461,10 @@ namespace ThemeUtils {
 
             )");
         }
+
+        for (QPushButton* btn : widget->findChildren<QPushButton*>()) {
+            btn->setCursor(Qt::PointingHandCursor);
+        }
+
     }
 }
