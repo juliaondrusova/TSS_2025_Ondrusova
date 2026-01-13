@@ -193,4 +193,6 @@ private:
 
     // V private functions:
     void applyRGB(QImage& image);
+
+	QPixmap m_previewPixmap;
 };

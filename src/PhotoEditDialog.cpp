@@ -66,6 +66,13 @@ PhotoEditorDialog::PhotoEditorDialog(Photo* photo, QWidget* parent)
 	QTimer::singleShot(0, this, [this]() {
 		updatePreview();
 		});
+
+	m_previewPixmap = m_originalPixmap.scaled(
+		1024, 1024,
+		Qt::KeepAspectRatio,
+		Qt::FastTransformation
+	);
+
 }
 
 // --- UI Construction ---
@@ -482,7 +489,7 @@ void PhotoEditorDialog::mouseReleaseEvent(QMouseEvent* event)
 
 void PhotoEditorDialog::updatePreview()
 {
-	QImage image = m_originalPixmap.toImage();
+	QImage image = m_previewPixmap.toImage();
 
 	// Apply all adjustments in sequence
 	applyRotation(image);
@@ -494,9 +501,12 @@ void PhotoEditorDialog::updatePreview()
 	applyTemperature(image);
 	applyRGB(image);
 
-	m_editedPixmap = QPixmap::fromImage(image);
-	displayScaledPreview(); // Show updated image in preview
+	previewLabel->setPixmap(
+		QPixmap::fromImage(image)
+		.scaled(previewLabel->size(), Qt::KeepAspectRatio, Qt::FastTransformation)
+	);
 }
+
 
 void PhotoEditorDialog::applyRotation(QImage& image)
 {
@@ -590,10 +600,21 @@ void PhotoEditorDialog::displayScaledPreview()
 
 void PhotoEditorDialog::applyChanges()
 {
-	if (m_photoPtr)
-		m_photoPtr->setEditedPixmap(m_editedPixmap); // Save edited pixmap to photo object
+	QImage img = m_originalPixmap.toImage();
 
-	accept(); // Close dialog with success
+	applyRotation(img);
+	applyBrightness(img);
+	applyContrast(img);
+	applySaturation(img);
+	applyTemperature(img);
+	applyRGB(img);
+	applyActiveFilter(img);
+	applyWatermark(img);
+
+	m_editedPixmap = QPixmap::fromImage(img);
+	m_photoPtr->setEditedPixmap(m_editedPixmap);
+
+	accept();
 }
 
 void PhotoEditorDialog::resetChanges()
