@@ -449,15 +449,13 @@ void PhotoEditorDialog::mousePressEvent(QMouseEvent* event)
 	if (previewLabel->rect().contains(posInLabel))
 	{
 
-		// Zobrazenie pôvodného obrázka
-		QPixmap originalFromFile(m_originalPhoto.filePath());
-		QPixmap scaled = originalFromFile.scaled(
-			previewLabel->size(),
-			Qt::KeepAspectRatio,
-			Qt::SmoothTransformation
+		previewLabel->setPixmap(
+			m_previewPixmap.scaled(
+				previewLabel->size(),
+				Qt::KeepAspectRatio,
+				Qt::SmoothTransformation
+			)
 		);
-
-		previewLabel->setPixmap(scaled);
 		m_showingOriginal = true;
 
 
@@ -501,10 +499,15 @@ void PhotoEditorDialog::updatePreview()
 	applyTemperature(image);
 	applyRGB(image);
 
+	m_editedPixmap = QPixmap::fromImage(image);
+
+	displayScaledPreview();
+	/*
 	previewLabel->setPixmap(
 		QPixmap::fromImage(image)
 		.scaled(previewLabel->size(), Qt::KeepAspectRatio, Qt::FastTransformation)
 	);
+	*/
 }
 
 
@@ -591,9 +594,16 @@ void PhotoEditorDialog::applySaturation(QImage& image)
 
 void PhotoEditorDialog::displayScaledPreview()
 {
+	
 	// Scale the edited pixmap to fit the preview label while maintaining aspect ratio
 	QPixmap scaled = m_editedPixmap.scaled(previewLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
 	previewLabel->setPixmap(scaled);
+	/*
+	previewLabel->setPixmap(
+		QPixmap(m_previewPixmap)
+		.scaled(previewLabel->size(), Qt::KeepAspectRatio, Qt::FastTransformation)
+	);
+	*/
 }
 
 // --- Actions ---
