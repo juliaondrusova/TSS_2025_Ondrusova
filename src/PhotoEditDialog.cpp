@@ -494,20 +494,14 @@ void PhotoEditorDialog::updatePreview()
 	applyBrightness(image);
 	applyContrast(image);
 	applySaturation(image);
-	applyActiveFilter(image);
-	applyWatermark(image);
 	applyTemperature(image);
 	applyRGB(image);
+	applyActiveFilter(image);
+	applyWatermark(image);
 
 	m_editedPixmap = QPixmap::fromImage(image);
 
 	displayScaledPreview();
-	/*
-	previewLabel->setPixmap(
-		QPixmap::fromImage(image)
-		.scaled(previewLabel->size(), Qt::KeepAspectRatio, Qt::FastTransformation)
-	);
-	*/
 }
 
 
@@ -598,12 +592,6 @@ void PhotoEditorDialog::displayScaledPreview()
 	// Scale the edited pixmap to fit the preview label while maintaining aspect ratio
 	QPixmap scaled = m_editedPixmap.scaled(previewLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
 	previewLabel->setPixmap(scaled);
-	/*
-	previewLabel->setPixmap(
-		QPixmap(m_previewPixmap)
-		.scaled(previewLabel->size(), Qt::KeepAspectRatio, Qt::FastTransformation)
-	);
-	*/
 }
 
 // --- Actions ---

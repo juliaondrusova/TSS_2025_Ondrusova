@@ -25,9 +25,10 @@ file(GLOB UI_FILES src/*.ui)
 file(GLOB H_FILES src/*.h)
 file(GLOB CPP_FILES src/*.cpp)
 file(GLOB QRC_FILES src/*.qrc)
+file(GLOB RC_FILES src/*.rc)
 file(GLOB TEST_SOURCES tests/*.cpp)
 
-set(SOURCE_LIST ${CPP_FILES} ${UI_FILES} ${H_FILES} ${QRC_FILES})
+set(SOURCE_LIST ${CPP_FILES} ${UI_FILES} ${H_FILES} ${QRC_FILES} ${RC_FILES})
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES
     ${SOURCE_LIST}
@@ -113,14 +114,11 @@ add_executable(tst_TSS_AppIntegration
     src/PhotoExportDialog.cpp
     src/PhotoExportDialog.h
     src/ThemeUtils.h
-    
-    # PRIDAJ TIETO:
-    src/Photo.cpp              # ← Toto chýba!
+    src/Photo.cpp              
     src/Photo.h
-    src/ThemeUtils.cpp         # ← Toto chýba!
-    
-    # Pridaj všetky ostatné .cpp a .h súbory ktoré máš v src/
+    src/ThemeUtils.cpp         
 )
+
 target_link_libraries(tst_TSS_AppIntegration
     PRIVATE Qt6::Widgets Qt6::Core Qt6::Gui Qt6::Test
 )
