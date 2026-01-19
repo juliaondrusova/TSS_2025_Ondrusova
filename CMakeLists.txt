@@ -80,14 +80,13 @@ add_executable(tst_TSS_AppGUI
     src/PhotoExportDialog.cpp
     src/PhotoExportDialog.h
     src/ThemeUtils.h
-    
-    # PRIDAJ TIETO:
-    src/Photo.cpp              # ← Toto chýba!
+    src/Photo.cpp              
     src/Photo.h
-    src/ThemeUtils.cpp         # ← Toto chýba!
-    
-    # Pridaj všetky ostatné .cpp a .h súbory ktoré máš v src/
+    src/ThemeUtils.cpp         
+    src/CropDialog.cpp
+    src/CropDialog.h   
 )
+
 target_link_libraries(tst_TSS_AppGUI
     PRIVATE Qt6::Widgets Qt6::Core Qt6::Gui Qt6::Test
 )
@@ -116,7 +115,10 @@ add_executable(tst_TSS_AppIntegration
     src/ThemeUtils.h
     src/Photo.cpp              
     src/Photo.h
-    src/ThemeUtils.cpp         
+    src/ThemeUtils.cpp 
+    src/CropDialog.cpp
+    src/CropDialog.h   
+        
 )
 
 target_link_libraries(tst_TSS_AppIntegration

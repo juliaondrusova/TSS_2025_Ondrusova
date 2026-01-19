@@ -68,10 +68,19 @@ void TestTSSAppIntegration::filterPhotosWithWindowVisible()
     model->clearFilters();
     QCoreApplication::processEvents();
 
+    // =====================================================
+    // FR-1.1 – Import photos from folder or external drive
+    // FR-1.2 - The system displays photos in a gallery or list view
+    // =====================================================
+
     // Verify all photos are loaded
     QCOMPARE(model->getActivePhotos().size(), 10);
 
     QTest::qWait(2000); // Visual pause to confirm photos are visible
+
+    // =====================================================
+    // FR-1.3: The user can add tags, comments, and ratings to photos.  
+    // =====================================================
 
     // --- Simulate GUI filter input ---
     QLineEdit* tagEdit = app.findChild<QLineEdit*>("tagFilterEdit");

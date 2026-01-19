@@ -15,6 +15,7 @@ TSS_App::TSS_App(QWidget* parent)
     : QMainWindow(parent)
 {
     ui.setupUi(this);
+    setWindowTitle("Photo Manager");
     ThemeUtils::setWidgetDarkMode(this, true);
 
     // Initialize the photo table model

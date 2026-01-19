@@ -1,4 +1,4 @@
-# URS-lite — Photo Software
+# URS-lite — Photo Manager Application
 
 ## 1. Vision
 Create a simple and fast Windows application (in C++ and Qt) that allows users to organize and perform basic edits on photos, browse them, search, and export to various formats.
@@ -24,19 +24,17 @@ Create a simple and fast Windows application (in C++ and Qt) that allows users t
 ## 4. User Stories (Backlog) with MoSCoW
 
 - [M] As a user, I want to crop, rotate, and adjust brightness, contrast, and saturation of my photos.
-- [M] As a user, I want the application to support .jpg, .png, and .HEIC image file types.
+- [M] As a user, I want the application to support .jpg, .png and .HEIC image file types.
 - [M] As a user, I want to assign tags, ratings, and comments to photos.
-- [M] As a user, I want to search photos by date, tag, and color.
+- [M] As a user, I want to search photos by date, tag, and rating.
 - [M] As a user, I want to apply watermarks with a logo to my photos.
 - [M] As a user, I want to import photos from an external drive and export them to other image file types.
-- [M] As a user, I want to process photos both in bulk and individually.
-- [S] As a user, I want the application to support .RAW image files.
+- [S] As a user, I want the application to support .RAW and .tiff image files.
 - [S] As a user, I want the application to have a simple, clean, and modern interface so that I can navigate it easily.  
 - [C] As a user, I could use a dark mode so that I can work comfortably in low-light environments.  
-- [C] As a user, I could work with .tiff image files.
 - [C] As a user, I could use preset filters for quick photo enhancement.
 - [W] As a user, I would like category suggestions to be generated automatically using AI, but I can modify them later.  
-
+- [W] As a user, I want to process photos both in bulk and individually.
 ---
 
 ## 5. Acceptance Criteria (for top Must stories)
@@ -44,7 +42,7 @@ Create a simple and fast Windows application (in C++ and Qt) that allows users t
 **Story:** As a user, I want to search photos by date, tag, and color.
 
 - AC-1: The user enters a date/tag/color, and the system returns the matching photos.  
-- AC-2: The search completes within 15 seconds even for 1,000 photos.  
+- AC-2: The search completes within 15 seconds even for 10,000 photos.  
 - AC-3: The user can combine multiple filters.  
 
 ---
@@ -68,8 +66,8 @@ Then: the photos are imported into the application or exported to the target fol
 ## 7. Non-functional Requirements (NFRs) (4–6 metrics)
 
 - **Performance:** 1,000 photos load within 15 seconds.  
-- **Reliability:** In case of a crash, the application automatically saves ongoing work.  
-- **Usability:** Photos can be browsed quickly and easily.  
+- **Reliability:** Application autosaves the last opened folder and user session.
+- **Usability:**  Basic edit operation can be performed in max. 3 clicks.
 - **UI:** Must be simple, modern, and optionally support Dark Mode.  
 - **Availability:** The program must work without complex installation and must not be memory-intensive.  
 
@@ -79,16 +77,16 @@ Then: the photos are imported into the application or exported to the target fol
 - AI-based categorization  
 - Mobile application  
 - Cloud backup of all photos  
+- Bulk processing
 
 ---
 
 ## 9. Open Questions and Assumptions
-- **Q1:** What exact export formats will be mandatory?  
-- **Q2:** Within what time limit must 1,000 photos be loaded? Is 15 seconds fast enough?
-- **Q3:** What is the maximum allowed size of the resulting application?  
-- **Q4:** More detailed specification of batch processing. 
-- **Q5:** What is the maximum allowed size for a single image?
+- **Q1:** Should edits overwrite the original file or save a copy?
+- **Q2:** Which export formats are mandatory?
+- **Q3:** What is the maximum allowed size for a single image?
 - **Assumption 1:** Users will work only on Windows systems.  
 - **Assumption 2:** Only freely licensed libraries will be used.  
+- **Assumption 3:** The user has at least 8 GB RAM.
 
 ---
