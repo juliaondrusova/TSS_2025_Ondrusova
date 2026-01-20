@@ -25,6 +25,8 @@ public:
     // Setters for image data provided by the parent dialog
 	void setSourceSize(QSize size) { m_sourceSize = size; } // Original full-resolution image size
     void setPixmapRect(QRect r) { m_pixmapRect = r; }      // Geometry of the scaled image on screen
+    void setFullSize(const QSize& size) { m_fullSize = size; update(); }
+    QSize fullSize() const { return m_fullSize; }
 
     // Updates the aspect ratio and recalculates the rectangle to stay centered
     void setFixedAspectRatio(double ratio)
@@ -56,6 +58,8 @@ public:
 
 	void setInitialRect(const QRect& r) { m_cropRect = r; update(); } // Set initial crop rectangle
 	QRect cropRect() const { return m_cropRect.normalized(); } // Get the current crop rectangle
+
+    QRect m_pixmapRect;     // Coordinates of the scaled image within the overlay
 
 protected:
     // Core drawing logic for the darkening effect and crop handles
@@ -97,8 +101,8 @@ protected:
         if (m_pixmapRect.width() > 0) 
         {
 			// Calculate scaling factors between displayed image and original image
-            double scaleX = (double)m_sourceSize.width() / m_pixmapRect.width();
-            double scaleY = (double)m_sourceSize.height() / m_pixmapRect.height();
+            double scaleX = double(m_fullSize.width()) / m_pixmapRect.width();
+            double scaleY = double(m_fullSize.height()) / m_pixmapRect.height();
             int realW = qRound(normRect.width() * scaleX);
             int realH = qRound(normRect.height() * scaleY);
 
@@ -306,13 +310,14 @@ private:
     Handle m_activeHandle;  // Part currently being dragged
     double m_aspectRatio;   // Width/Height ratio (0 = free)
     QSize m_sourceSize;     // Full original resolution of the image
-    QRect m_pixmapRect;     // Coordinates of the scaled image within the overlay
+    //QRect m_pixmapRect;     // Coordinates of the scaled image within the overlay
+	QSize m_fullSize;	   // Full original image size for reference
 };
 
 // ===== CropDialog Implementation =====
 
-CropDialog::CropDialog(const QPixmap& source, QWidget* parent)
-    : QDialog(parent), m_sourcePixmap(source)
+CropDialog::CropDialog(const QPixmap& source, const QSize& originalSize, QWidget* parent)
+    : QDialog(parent), m_sourcePixmap(source), m_originalSize(originalSize)
 {
     setWindowTitle("Crop Image");
     resize(800, 600);
@@ -333,6 +338,7 @@ void CropDialog::buildUI()
     overlay = new CropOverlay(imageLabel);
     CropOverlay* cropOverlay = static_cast<CropOverlay*>(overlay);
     cropOverlay->setSourceSize(m_sourcePixmap.size());
+	cropOverlay->setFullSize(m_originalSize);
 
     // --- Aspect ratio selection row ---
     QHBoxLayout* aspectLayout = new QHBoxLayout;
@@ -406,28 +412,49 @@ void CropDialog::showEvent(QShowEvent* event)
 void CropDialog::applyCrop()
 {
     CropOverlay* o = static_cast<CropOverlay*>(overlay);
-    QRect r = o->cropRect(); // get crop rectangle in overlay coords
+    QRect crop = o->cropRect(); // get crop rectangle in overlay coords
     QPixmap displayed = imageLabel->pixmap();
-    if (displayed.isNull() || r.isEmpty()) return;
+    if (displayed.isNull() || crop.isEmpty()) return;
 
-    // Get the rect where the image is actually drawn (to handle margins/alignment)
-    QRect contentRect = QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, displayed.size(), imageLabel->rect());
+    QRect pixRect = o->m_pixmapRect;
 
-    // Convert overlay-relative coords to pixmap-relative coords
-    int relX = r.x() - contentRect.x();
-    int relY = r.y() - contentRect.y();
+    double scaleX = double(o->fullSize().width()) / pixRect.width();
+    double scaleY = double(o->fullSize().height()) / pixRect.height();
 
-    // Calculate scaling factors between display and original
-    double scaleX = (double)m_sourcePixmap.width() / displayed.width();
-    double scaleY = (double)m_sourcePixmap.height() / displayed.height();
+    QRect finalRect(
+        qRound((crop.x() - pixRect.x()) * scaleX),
+        qRound((crop.y() - pixRect.y()) * scaleY),
+        qRound(crop.width() * scaleX),
+        qRound(crop.height() * scaleY)
+    );
+    finalRect = finalRect.intersected(QRect(QPoint(0, 0), m_originalSize));
 
-    // Generate the final cropping rectangle for the source image
-    QRect finalRect(qRound(relX * scaleX), qRound(relY * scaleY), qRound(r.width() * scaleX), qRound(r.height() * scaleY));
-
-    // Safety intersection with original bounds and copy
-    m_croppedPixmap = m_sourcePixmap.copy(finalRect.intersected(m_sourcePixmap.rect()));
+    // Uloûiù normalizovanÈ crop koordin·ty**
+    m_normalizedCropRect = QRectF(
+        double(finalRect.x()) / m_originalSize.width(),
+        double(finalRect.y()) / m_originalSize.height(),
+        double(finalRect.width()) / m_originalSize.width(),
+        double(finalRect.height()) / m_originalSize.height()
+    );
+   
     accept();
 }
 
-// --- Return the cropped pixmap ---
-QPixmap CropDialog::croppedPixmap() const { return m_croppedPixmap; }
+QPixmap CropDialog::applyCropToPixmap(const QPixmap& source, const QRectF& normalizedCrop)
+{
+    if (source.isNull() || normalizedCrop.isEmpty())
+        return QPixmap();
+
+    // Konvertovaù normalizovanÈ hodnoty na absol˙tne pixely
+    QRect cropRect(
+        qRound(normalizedCrop.x() * source.width()),
+        qRound(normalizedCrop.y() * source.height()),
+        qRound(normalizedCrop.width() * source.width()),
+        qRound(normalizedCrop.height() * source.height())
+    );
+
+    // Intersection pre istotu
+    cropRect = cropRect.intersected(source.rect());
+
+    return source.copy(cropRect);
+}

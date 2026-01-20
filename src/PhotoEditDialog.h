@@ -110,7 +110,6 @@ private:
     void createAdjustmentSlider(const QString& label, QSlider*& slider, QSpinBox*& spinbox, QVBoxLayout* layout);
 
     bool eventFilter(QObject* obj, QEvent* event);
-    void resizeEvent(QResizeEvent* event);
 
     void connectSignals();
     void connectSliderWithSpinbox(QSlider* slider, QSpinBox* spinbox, int& value);
@@ -133,8 +132,10 @@ private:
     // Original photo data
     Photo m_originalPhoto;
     Photo* m_photoPtr;
+
     QPixmap m_originalPixmap;
     QPixmap m_editedPixmap;
+    QPixmap m_previewPixmap;
 
     // UI components
     QLabel* previewLabel;
@@ -194,5 +195,4 @@ private:
     // V private functions:
     void applyRGB(QImage& image);
 
-	QPixmap m_previewPixmap;
 };

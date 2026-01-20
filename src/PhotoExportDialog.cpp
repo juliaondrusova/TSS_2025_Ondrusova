@@ -47,10 +47,10 @@ void PhotoExportDialog::setupUI()
 	// Set column widths and properties
     m_tableWidget->horizontalHeader()->setStretchLastSection(false);
     m_tableWidget->setColumnWidth(ColCheckbox, 80);
-    m_tableWidget->setColumnWidth(ColPreview, 120);
-    m_tableWidget->setColumnWidth(ColOriginalPath, 280);
-    m_tableWidget->setColumnWidth(ColNewPath, 280);
-    m_tableWidget->setColumnWidth(ColBrowse, 130);
+    m_tableWidget->setColumnWidth(ColPreview, 90);
+    m_tableWidget->setColumnWidth(ColOriginalPath, 285);
+    m_tableWidget->setColumnWidth(ColNewPath, 285);
+    m_tableWidget->setColumnWidth(ColBrowse, 140);
     m_tableWidget->setColumnWidth(ColStatus, 80);
 
     m_tableWidget->verticalHeader()->setDefaultSectionSize(80);

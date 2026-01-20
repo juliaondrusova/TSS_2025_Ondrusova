@@ -241,22 +241,6 @@ bool PhotoEditorDialog::eventFilter(QObject* obj, QEvent* event)
 	return QDialog::eventFilter(obj, event);
 }
 
-
-void PhotoEditorDialog::resizeEvent(QResizeEvent* event)
-{
-	QDialog::resizeEvent(event);
-
-	if (!m_editedPixmap.isNull()) {
-		previewLabel->setPixmap(
-			m_editedPixmap.scaled(
-				previewLabel->size(),
-				Qt::KeepAspectRatio,
-				Qt::SmoothTransformation
-			)
-		);
-	}
-}
-
 void PhotoEditorDialog::createSliderWithSpinbox(const QString& label, QSlider*& slider, QSpinBox*& spinbox, QVBoxLayout* layout)
 {
 	createAdjustmentSlider(label, slider, spinbox, layout);
@@ -366,19 +350,39 @@ void PhotoEditorDialog::connectSignals()
 	// Basic tools
 	connect(rotateLeftBtn, &QPushButton::clicked, this, &PhotoEditorDialog::rotateLeft);
 	connect(rotateRightBtn, &QPushButton::clicked, this, &PhotoEditorDialog::rotateRight);
-
-	//connect(cropBtn, &QPushButton::toggled, this, &PhotoEditorDialog::cropClicked);
 	connect(cropBtn, &QPushButton::clicked, this, [this]() {
-		if (m_editedPixmap.isNull())
+		if (m_previewPixmap.isNull())
 			return;
 
-		CropDialog dlg(m_editedPixmap, this);
-		if (dlg.exec() == QDialog::Accepted) {
-			m_originalPixmap = dlg.croppedPixmap();
+		QImage img = m_previewPixmap.toImage(); // zaèíname zo škálovanej preview
+
+		// --- Aplikujeme všetky úpravy, ktoré sa aktuálne zobrazujú ---
+		applyRotation(img);
+		applyBrightness(img);
+		applyContrast(img);
+		applySaturation(img);
+		applyTemperature(img);
+		applyRGB(img);
+		applyActiveFilter(img);
+		applyWatermark(img);
+		QPixmap processedPixmap = QPixmap::fromImage(img);
+
+		CropDialog dlg(processedPixmap, m_editedPixmap.size(), this);
+		if (dlg.exec() == QDialog::Accepted) 
+		{
+			QRectF normalizedCrop = dlg.normalizedCropRect();
+			m_editedPixmap = CropDialog::applyCropToPixmap(m_editedPixmap, normalizedCrop);
+			
+			m_previewPixmap = m_editedPixmap.scaled(
+				1024, 1024,
+				Qt::KeepAspectRatio,
+				Qt::FastTransformation
+			);
 			updatePreview();
 		}
+		// Uncheck the button after crop operation
+		cropBtn->setChecked(false);
 		});
-
 
 
 	// Adjustments
@@ -438,7 +442,7 @@ void PhotoEditorDialog::rotateRight()
 }
 
 
-// --- Mouse Events for Crop ---
+// --- Mouse Events for showing Original/Edited version of picture ---
 
 void PhotoEditorDialog::mousePressEvent(QMouseEvent* event)
 {
@@ -448,9 +452,8 @@ void PhotoEditorDialog::mousePressEvent(QMouseEvent* event)
 	// Kliknutie je vo vnútri labelu
 	if (previewLabel->rect().contains(posInLabel))
 	{
-
 		previewLabel->setPixmap(
-			m_previewPixmap.scaled(
+			m_originalPixmap.scaled(
 				previewLabel->size(),
 				Qt::KeepAspectRatio,
 				Qt::SmoothTransformation
@@ -474,7 +477,9 @@ void PhotoEditorDialog::mouseReleaseEvent(QMouseEvent* event)
 	if (m_showingOriginal)
 	{
 		m_showingOriginal = false;
-		displayScaledPreview();  // Show edited version
+		QApplication::setOverrideCursor(Qt::WaitCursor);
+		updatePreview();
+		QApplication::restoreOverrideCursor();
 		event->accept();
 		return;
 	}
@@ -499,9 +504,12 @@ void PhotoEditorDialog::updatePreview()
 	applyActiveFilter(image);
 	applyWatermark(image);
 
-	m_editedPixmap = QPixmap::fromImage(image);
+	QPixmap finalPreview = QPixmap::fromImage(image);
 
-	displayScaledPreview();
+	// Škálovanie na ve¾kos labelu (aby to v UI vyzeralo dobre)
+	previewLabel->setPixmap(finalPreview.scaled(previewLabel->size(),
+		Qt::KeepAspectRatio,
+		Qt::SmoothTransformation));
 }
 
 
@@ -590,7 +598,7 @@ void PhotoEditorDialog::displayScaledPreview()
 {
 	
 	// Scale the edited pixmap to fit the preview label while maintaining aspect ratio
-	QPixmap scaled = m_editedPixmap.scaled(previewLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+	QPixmap scaled = m_previewPixmap.scaled(previewLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
 	previewLabel->setPixmap(scaled);
 }
 
@@ -598,16 +606,62 @@ void PhotoEditorDialog::displayScaledPreview()
 
 void PhotoEditorDialog::applyChanges()
 {
-	QImage img = m_originalPixmap.toImage();
+	QImage img = m_editedPixmap.toImage();
 
+	// Check if we need to show progress
+	bool showProgress = (img.width() * img.height() > PROGRESS_THRESHOLD_PIXELS);
+	QScopedPointer<QProgressDialog> progress; // Use QScopedPointer for auto cleanup
+
+	if (showProgress) {
+		progress.reset(new QProgressDialog("Applying changes...", "Cancel", 0, 8, this));
+		progress->setWindowModality(Qt::WindowModal);
+		progress->setMinimumDuration(0);
+		progress->setValue(0);
+		progress->show();
+		QCoreApplication::processEvents();
+	}
+
+	// Helper lambda to update progress and check for cancellation
+	auto updateProgress = [&](int step) {
+		if (progress) {
+			progress->setValue(step);
+			if (progress->wasCanceled()) {
+				return false;
+			}
+			QCoreApplication::processEvents(); // Keep UI responsive
+		}
+		return true;
+		};
+
+	// Apply each operation with progress update
+	if (!updateProgress(1)) return;
 	applyRotation(img);
+
+	if (!updateProgress(2)) return;
 	applyBrightness(img);
+
+	if (!updateProgress(3)) return;
 	applyContrast(img);
+
+	if (!updateProgress(4)) return;
 	applySaturation(img);
+
+	if (!updateProgress(5)) return;
 	applyTemperature(img);
+
+	if (!updateProgress(6)) return;
 	applyRGB(img);
+
+	if (!updateProgress(7)) return;
 	applyActiveFilter(img);
+
+	if (!updateProgress(8)) return;
 	applyWatermark(img);
+
+	// If we get here, all operations completed
+	if (progress) {
+		progress->setValue(8);
+	}
 
 	m_editedPixmap = QPixmap::fromImage(img);
 	m_photoPtr->setEditedPixmap(m_editedPixmap);
@@ -643,8 +697,11 @@ void PhotoEditorDialog::resetChanges()
 	greenSlider->setValue(DEFAULT_ADJUSTMENT);
 	blueSlider->setValue(DEFAULT_ADJUSTMENT);
 
-	// Reload original image
-	m_originalPixmap = QPixmap(m_originalPhoto.filePath());
+	m_previewPixmap = m_originalPixmap.scaled(
+		1024, 1024,
+		Qt::KeepAspectRatio,
+		Qt::FastTransformation
+	);
 	updatePreview();
 }
 
