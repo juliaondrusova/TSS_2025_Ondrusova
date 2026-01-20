@@ -11,6 +11,7 @@
 #include <QApplication>
 #include <QTimer>
 
+// --- Constructor ---
 PhotoExportDialog::PhotoExportDialog(const QList<Photo*>& photosToExport, QWidget* parent)
     : QDialog(parent),
       m_photosToExport(photosToExport)
@@ -25,6 +26,7 @@ PhotoExportDialog::PhotoExportDialog(const QList<Photo*>& photosToExport, QWidge
     populateTable();
 }
 
+// --- Setup UI ---
 void PhotoExportDialog::setupUI() 
 {
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
@@ -92,6 +94,7 @@ void PhotoExportDialog::setupUI()
     connect(m_tableWidget, &QTableWidget::cellChanged, this, &PhotoExportDialog::onNewPathChanged);
 }
 
+// --- Populate Table ---
 void PhotoExportDialog::populateTable() 
 { 
     m_tableWidget->setRowCount(m_photosToExport.size());
@@ -108,6 +111,7 @@ void PhotoExportDialog::populateTable()
 
 }
 
+// --- Create Table Row ---
 void PhotoExportDialog::createTableRow(int row, Photo* photo) 
 {
     // Column 0: Checkbox
@@ -156,6 +160,7 @@ void PhotoExportDialog::createTableRow(int row, Photo* photo)
     m_tableWidget->setCellWidget(row, ColStatus, statusLabel);
 }
 
+// --- Browse Clicked ---
 void PhotoExportDialog::onBrowseClicked(int row) 
 {
     QString currentPath = m_tableWidget->item(row, ColNewPath)->text();
@@ -178,16 +183,19 @@ void PhotoExportDialog::onBrowseClicked(int row)
     }
 }
 
+// -- Select All Clicked ---
 void PhotoExportDialog::onSelectAllClicked()
 {
     setAllCheckboxes(true);
 }
 
+// --- Deselect All Clicked ---
 void PhotoExportDialog::onDeselectAllClicked()
 {
     setAllCheckboxes(false);
 }
 
+// --- Set All Checkboxes ---
 void PhotoExportDialog::setAllCheckboxes(bool checked)
 {
     for (int i = 0; i < m_tableWidget->rowCount(); i++)
@@ -200,6 +208,7 @@ void PhotoExportDialog::setAllCheckboxes(bool checked)
     }
 }
 
+// --- Preview Double Clicked ---
 void PhotoExportDialog::onPreviewDoubleClicked(int row, int column) 
 {
     if (column != ColPreview) 
@@ -212,7 +221,7 @@ void PhotoExportDialog::onPreviewDoubleClicked(int row, int column)
 	delete dlg; // Clean up after closing
 }
 
-
+// --- New Path Changed ---
 void PhotoExportDialog::onNewPathChanged(int row, int column) 
 {
     if (column != ColNewPath) return;
@@ -221,6 +230,7 @@ void PhotoExportDialog::onNewPathChanged(int row, int column)
     updateStatusIcon(row);
 }
 
+// --- Validate All Paths ---
 bool PhotoExportDialog::validateAllPaths() 
 {
     QStringList invalidRows;
@@ -257,7 +267,7 @@ bool PhotoExportDialog::validateAllPaths()
     return true;
 }
 
-
+// --- Get Selected Photos ---
 QList<Photo*> PhotoExportDialog::getSelectedPhotos() 
 {
     QList<Photo*> selected;
@@ -275,6 +285,7 @@ QList<Photo*> PhotoExportDialog::getSelectedPhotos()
     return selected;
 }
 
+// --- Validate Path ---
 QString PhotoExportDialog::getPathError(const QString& path) 
 {
     if (path.isEmpty())
@@ -296,6 +307,7 @@ QString PhotoExportDialog::getPathError(const QString& path)
     return ""; // No error
 }
 
+// --- Update Status Icon ---
 void PhotoExportDialog::updateStatusIcon(int row) 
 {
     if (!m_tableWidget->item(row, ColNewPath)) 
@@ -330,7 +342,7 @@ void PhotoExportDialog::updateStatusIcon(int row)
     }
 }
 
-
+// --- Export Button Clicked ---
 void PhotoExportDialog::onExportClicked() 
 {
     // Validate all paths first
@@ -391,6 +403,7 @@ void PhotoExportDialog::onExportClicked()
     exportPhotos();
 }
 
+// --- Export Photos ---
 void PhotoExportDialog::exportPhotos()
 {
     setExportButtonsEnabled(false);
@@ -494,7 +507,7 @@ void PhotoExportDialog::exportPhotos()
     setExportButtonsEnabled(true);
 }
 
-
+// --- Enable/Disable Export Buttons ---
 void PhotoExportDialog::setExportButtonsEnabled(bool enabled)
 {
     m_btnExport->setEnabled(enabled);
@@ -503,7 +516,7 @@ void PhotoExportDialog::setExportButtonsEnabled(bool enabled)
     m_btnDeselectAll->setEnabled(enabled);
 }
 
-
+// --- Cancel Export ---
 void PhotoExportDialog::onCancelClicked() 
 {
 	reject(); // Close dialog without exporting

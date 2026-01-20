@@ -19,7 +19,8 @@
 #include "CropDialog.h"
 
 
-// Constants
+// --- Constants ---
+
 namespace {
 	constexpr int MIN_ADJUSTMENT = -100;
 	constexpr int MAX_ADJUSTMENT = 100;
@@ -31,7 +32,8 @@ namespace {
 	constexpr int PROGRESS_THRESHOLD_PIXELS = 1000000; // 1 megapixel
 }
 
-// Constructor
+// --- Constructor ----
+
 PhotoEditorDialog::PhotoEditorDialog(Photo* photo, QWidget* parent)
 	: QDialog(parent),
 	m_photoPtr(photo),
@@ -74,6 +76,7 @@ PhotoEditorDialog::PhotoEditorDialog(Photo* photo, QWidget* parent)
 	);
 
 }
+
 
 // --- UI Construction ---
 
@@ -134,6 +137,8 @@ void PhotoEditorDialog::buildUI()
 }
 
 
+// --- Ui Building Helpers ---
+
 void PhotoEditorDialog::createPreviewArea(QVBoxLayout* layout)
 {
 	previewLabel = new QLabel(this);
@@ -189,56 +194,6 @@ void PhotoEditorDialog::createAdjustmentPanel(QVBoxLayout* layout)
 	createAdjustmentSlider("Blue", blueSlider, blueValue, adjustLayout);
 
 	layout->addWidget(sectionGroup);
-}
-
-void PhotoEditorDialog::createAdjustmentSlider(
-	const QString& label,
-	QSlider*& slider,
-	QSpinBox*& spinbox,
-	QVBoxLayout* layout)
-{
-	QVBoxLayout* block = new QVBoxLayout();
-	block->setSpacing(3);
-
-	QHBoxLayout* header = new QHBoxLayout();
-	QLabel* lbl = new QLabel(label, this);
-
-	spinbox = new QSpinBox(this);
-	spinbox->setRange(MIN_ADJUSTMENT, MAX_ADJUSTMENT);
-	spinbox->setValue(DEFAULT_ADJUSTMENT);
-	spinbox->setButtonSymbols(QAbstractSpinBox::NoButtons);
-
-	spinbox->setFocusPolicy(Qt::StrongFocus);
-	spinbox->installEventFilter(this);
-
-	header->addWidget(lbl);
-	header->addStretch();
-	header->addWidget(spinbox);
-
-	slider = new QSlider(Qt::Horizontal, this);
-	slider->setRange(MIN_ADJUSTMENT, MAX_ADJUSTMENT);
-	slider->setValue(DEFAULT_ADJUSTMENT);
-	slider->setFocusPolicy(Qt::StrongFocus);
-	slider->installEventFilter(this);
-
-	block->addLayout(header);
-	block->addWidget(slider);
-	layout->addLayout(block);
-}
-
-
-bool PhotoEditorDialog::eventFilter(QObject* obj, QEvent* event)
-{
-	if (event->type() == QEvent::Wheel) {
-		if (qobject_cast<QSlider*>(obj) ||
-			qobject_cast<QSpinBox*>(obj) ||
-			qobject_cast<QComboBox*>(obj))
-		{
-			event->ignore();
-			return true;
-		}
-	}
-	return QDialog::eventFilter(obj, event);
 }
 
 void PhotoEditorDialog::createSliderWithSpinbox(const QString& label, QSlider*& slider, QSpinBox*& spinbox, QVBoxLayout* layout)
@@ -336,6 +291,51 @@ void PhotoEditorDialog::createActionButtons(QVBoxLayout* layout)
 	layout->addWidget(buttonWidget);
 }
 
+void PhotoEditorDialog::createAdjustmentSlider(const QString& label, QSlider*& slider, QSpinBox*& spinbox, QVBoxLayout* layout)
+{
+	QVBoxLayout* block = new QVBoxLayout();
+	block->setSpacing(3);
+
+	QHBoxLayout* header = new QHBoxLayout();
+	QLabel* lbl = new QLabel(label, this);
+
+	spinbox = new QSpinBox(this);
+	spinbox->setRange(MIN_ADJUSTMENT, MAX_ADJUSTMENT);
+	spinbox->setValue(DEFAULT_ADJUSTMENT);
+	spinbox->setButtonSymbols(QAbstractSpinBox::NoButtons);
+
+	spinbox->setFocusPolicy(Qt::StrongFocus);
+	spinbox->installEventFilter(this);
+
+	header->addWidget(lbl);
+	header->addStretch();
+	header->addWidget(spinbox);
+
+	slider = new QSlider(Qt::Horizontal, this);
+	slider->setRange(MIN_ADJUSTMENT, MAX_ADJUSTMENT);
+	slider->setValue(DEFAULT_ADJUSTMENT);
+	slider->setFocusPolicy(Qt::StrongFocus);
+	slider->installEventFilter(this);
+
+	block->addLayout(header);
+	block->addWidget(slider);
+	layout->addLayout(block);
+}
+
+bool PhotoEditorDialog::eventFilter(QObject* obj, QEvent* event)
+{
+	if (event->type() == QEvent::Wheel) {
+		if (qobject_cast<QSlider*>(obj) ||
+			qobject_cast<QSpinBox*>(obj) ||
+			qobject_cast<QComboBox*>(obj))
+		{
+			event->ignore();
+			return true;
+		}
+	}
+	return QDialog::eventFilter(obj, event);
+}
+
 
 // --- Signal Connections ---
 
@@ -427,20 +427,6 @@ void PhotoEditorDialog::connectSliderWithSpinbox(QSlider* slider, QSpinBox* spin
 		});
 }
 
-// --- Basic Operations ---
-
-void PhotoEditorDialog::rotateLeft()
-{
-	m_rotation = (m_rotation + 90 + 360) % 360;
-	updatePreview();
-}
-
-void PhotoEditorDialog::rotateRight()
-{
-	m_rotation = (m_rotation - 90) % 360;
-	updatePreview();
-}
-
 
 // --- Mouse Events for showing Original/Edited version of picture ---
 
@@ -470,7 +456,6 @@ void PhotoEditorDialog::mousePressEvent(QMouseEvent* event)
 	QDialog::mousePressEvent(event);
 }
 
-
 void PhotoEditorDialog::mouseReleaseEvent(QMouseEvent* event)
 {
 	// If showing original, return to edited version
@@ -487,6 +472,7 @@ void PhotoEditorDialog::mouseReleaseEvent(QMouseEvent* event)
 	// Pass event to base class
 	QDialog::mouseReleaseEvent(event);
 }
+
 
 // --- Image Processing ---
 
@@ -513,6 +499,8 @@ void PhotoEditorDialog::updatePreview()
 }
 
 
+// --- Rotation Implementation ---
+
 void PhotoEditorDialog::applyRotation(QImage& image)
 {
 	if (m_rotation == 0)
@@ -522,6 +510,22 @@ void PhotoEditorDialog::applyRotation(QImage& image)
 	transform.rotate(m_rotation); // Rotate by the specified angle
 	image = image.transformed(transform, Qt::SmoothTransformation);
 }
+
+void PhotoEditorDialog::rotateLeft()
+{
+	m_rotation = (m_rotation + 90 + 360) % 360;
+	updatePreview();
+}
+
+void PhotoEditorDialog::rotateRight()
+{
+	m_rotation = (m_rotation - 90) % 360;
+	updatePreview();
+}
+
+
+
+// --- Adjustment Implementations ---
 
 void PhotoEditorDialog::applyContrast(QImage& image)
 {
@@ -593,14 +597,6 @@ void PhotoEditorDialog::applySaturation(QImage& image)
 	}
 }
 
-
-void PhotoEditorDialog::displayScaledPreview()
-{
-	
-	// Scale the edited pixmap to fit the preview label while maintaining aspect ratio
-	QPixmap scaled = m_previewPixmap.scaled(previewLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
-	previewLabel->setPixmap(scaled);
-}
 
 // --- Actions ---
 
@@ -705,6 +701,15 @@ void PhotoEditorDialog::resetChanges()
 	updatePreview();
 }
 
+void PhotoEditorDialog::displayScaledPreview()
+{
+
+	// Scale the edited pixmap to fit the preview label while maintaining aspect ratio
+	QPixmap scaled = m_previewPixmap.scaled(previewLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+	previewLabel->setPixmap(scaled);
+}
+
+
 // --- Filters ---
 
 void PhotoEditorDialog::applyFilter(int filterIndex)
@@ -738,10 +743,7 @@ void PhotoEditorDialog::applyActiveFilter(QImage& image)
 	}
 }
 
-void PhotoEditorDialog::processImagePixels(
-	QImage& image,
-	QProgressDialog* progress,
-	int filterNumber) // filterNumber: 0 = none, 1 = grayscale, 2 = sepia, 3 = negative, 4 = pastel, 5 = vintage
+void PhotoEditorDialog::processImagePixels(QImage& image, QProgressDialog* progress, int filterNumber) // filterNumber: 0 = none, 1 = grayscale, 2 = sepia, 3 = negative, 4 = pastel, 5 = vintage
 {
 	if (image.format() != QImage::Format_RGB32)
 		image = image.convertToFormat(QImage::Format_RGB32);
@@ -832,6 +834,7 @@ void PhotoEditorDialog::processImagePixels(
 	}
 }
 
+
 // --- Watermark ---
 
 void PhotoEditorDialog::addWatermark()
@@ -900,6 +903,7 @@ QPoint PhotoEditorDialog::calculateWatermarkPosition(const QSize& imageSize, con
 }
 
 
+// --- Temperature ---
 void PhotoEditorDialog::applyTemperature(QImage& image)
 {
 	if (m_temperature == 0) return;
@@ -920,6 +924,7 @@ void PhotoEditorDialog::applyTemperature(QImage& image)
 }
 
 
+// --- RGB Adjustments ---
 void PhotoEditorDialog::applyRGB(QImage& image)
 {
 	if (m_red == 0 && m_green == 0 && m_blue == 0) return;

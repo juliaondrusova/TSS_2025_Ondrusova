@@ -9,6 +9,7 @@
 #include <QStyle>
 
 // ===== Overlay widget: Handles the visual crop UI and mouse interaction =====
+
 class CropOverlay : public QWidget
 {
 public:
@@ -310,9 +311,9 @@ private:
     Handle m_activeHandle;  // Part currently being dragged
     double m_aspectRatio;   // Width/Height ratio (0 = free)
     QSize m_sourceSize;     // Full original resolution of the image
-    //QRect m_pixmapRect;     // Coordinates of the scaled image within the overlay
 	QSize m_fullSize;	   // Full original image size for reference
 };
+
 
 // ===== CropDialog Implementation =====
 
@@ -408,7 +409,6 @@ void CropDialog::showEvent(QShowEvent* event)
     updatePreview(); // update image & crop overlay whenever dialog is shown
 }
 
-// Maps the UI crop rectangle back to the original full-resolution image coordinates
 void CropDialog::applyCrop()
 {
     CropOverlay* o = static_cast<CropOverlay*>(overlay);

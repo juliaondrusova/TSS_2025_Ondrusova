@@ -62,9 +62,7 @@ Photo::Photo(const QString& path)
 }
 
 
-
 // --- Preview management ---
-
 
 /** Returns the cached preview, generates it on demand if missing. */
 QPixmap Photo::preview() const 

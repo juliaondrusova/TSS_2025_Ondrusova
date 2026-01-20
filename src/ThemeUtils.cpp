@@ -13,7 +13,8 @@ namespace ThemeUtils {
         if (!widget) return;
 
         QColor textColor = darkMode ? Qt::white : Qt::black;
-
+        
+		// --- Style of application widgets depending on darkMode variable ---
         if (darkMode)
         {
             // Modern dark theme inspired by mobile design

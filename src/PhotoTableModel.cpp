@@ -25,8 +25,7 @@ PhotoTableModel::PhotoTableModel(QObject* parent)
 {
 }
 
-// --- QAbstractTableModel Interface ---
-
+// --- Row Count with Pagination ---
 int PhotoTableModel::rowCount(const QModelIndex&) const 
 {
 	const QList<Photo>& photos = getActivePhotos(); // Get the current list of photos (filtered or all)
@@ -35,10 +34,12 @@ int PhotoTableModel::rowCount(const QModelIndex&) const
     return qMax(0, qMin(m_pageSize, remaining)); 
 }
 
+// --- Fixed Column Count ---
 int PhotoTableModel::columnCount(const QModelIndex&) const {
 	return ColumnCount; // Fixed number of columns
 }
 
+// --- Data Retrieval for Each Cell ---
 QVariant PhotoTableModel::data(const QModelIndex& index, int role) const 
 {
     if (!index.isValid()) // Check if the index is valid
@@ -78,6 +79,7 @@ QVariant PhotoTableModel::data(const QModelIndex& index, int role) const
     }
 }
 
+// --- Header Data in Table ---
 QVariant PhotoTableModel::headerData(int section, Qt::Orientation orientation, int role) const 
 {
 	if (role != Qt::DisplayRole || orientation != Qt::Horizontal) // Only handle horizontal headers for display role
@@ -88,6 +90,7 @@ QVariant PhotoTableModel::headerData(int section, Qt::Orientation orientation, i
         : QVariant();
 }
 
+//  --- State Flags for Each Item ---
 Qt::ItemFlags PhotoTableModel::flags(const QModelIndex& index) const 
 {
 	if (!index.isValid()) // Invalid index
@@ -107,6 +110,7 @@ Qt::ItemFlags PhotoTableModel::flags(const QModelIndex& index) const
     return flags;
 }
 
+// --- Set Data to Model ---
 bool PhotoTableModel::setData(const QModelIndex& index, const QVariant& value, int role) 
 {
 	if (!index.isValid()) // Invalid index
@@ -140,6 +144,7 @@ bool PhotoTableModel::setData(const QModelIndex& index, const QVariant& value, i
     return false;
 }
 
+// --- Sorting ---
 void PhotoTableModel::sort(int column, Qt::SortOrder order) 
 {
     m_sortColumn = column;
@@ -170,9 +175,7 @@ void PhotoTableModel::sort(int column, Qt::SortOrder order)
 	emit layoutChanged(); // Notify view that the layout has changed
 }
 
-
-// --- Public Interface ---
-
+// --- Add Photo ---
 void PhotoTableModel::addPhoto(const Photo& photo) 
 {
 	beginResetModel(); // Notify view of upcoming changes
@@ -186,31 +189,30 @@ void PhotoTableModel::addPhoto(const Photo& photo)
 	endResetModel(); // Notify view that changes are done
 }
 
-Photo PhotoTableModel::photoAt(int row) const 
-{
-	const QList<Photo>& photos = getActivePhotos(); // Get the current list of photos (filtered or all)
-    return photos.value(row);
-}
 
 // --- Filtering ---
 
+// --- Set rating filter ---
 void PhotoTableModel::setRatingFilter(int minRating) 
 {
     m_filterMinRating = minRating;
     applyFilters();
 }
 
+// --- Set tag filter ---
 void PhotoTableModel::setTagFilter(const QString& tag) {
     m_filterTag = tag;
     applyFilters();
 }
 
+// --- Set date range filter ---
 void PhotoTableModel::setDateFilter(const QDate& from, const QDate& to) {
     m_filterDateFrom = from;
     m_filterDateTo = to;
     applyFilters();
 }
 
+// --- Clear all filters ---
 void PhotoTableModel::clearFilters() 
 {
 	// Reset all filter criteria
@@ -222,6 +224,7 @@ void PhotoTableModel::clearFilters()
     applyFilters();
 }
 
+// --- Apply current filters to photo collection ---
 void PhotoTableModel::applyFilters() 
 {
 	beginResetModel(); // Notify view of upcoming changes
@@ -245,8 +248,10 @@ void PhotoTableModel::applyFilters()
 	emit noPhotosAfterFilter(m_filteredPhotos.isEmpty()); // Notify if no photos match filters
 }
 
+
 // --- Pagination ---
 
+// --- Move to next page ---
 void PhotoTableModel::nextPage() 
 {
 	const QList<Photo>& photos = getActivePhotos(); // Get the current list of photos (filtered or all)
@@ -262,6 +267,7 @@ void PhotoTableModel::nextPage()
     }
 }
 
+// --- Move to previous page ---
 void PhotoTableModel::prevPage() 
 {
 	// Move to previous page if not on the first page
@@ -272,13 +278,14 @@ void PhotoTableModel::prevPage()
     }
 }
 
+// --- Get total number of pages ---
 int PhotoTableModel::totalPages() const 
 {
     const QList<Photo>& photos = getActivePhotos();
 	return (photos.size() + m_pageSize - 1) / m_pageSize; // calculate total pages
 }
 
-
+// --- Set page size ---
 void PhotoTableModel::setPageSize(int newSize)
 {
 	if (newSize <= 0 || newSize == m_pageSize) // invalid size or no change
@@ -290,7 +297,7 @@ void PhotoTableModel::setPageSize(int newSize)
     endResetModel();
 }
 
-
+// --- Move to first page ---
 void PhotoTableModel::firstPage()
 {
     if (m_currentPage == 0) return;
@@ -300,6 +307,7 @@ void PhotoTableModel::firstPage()
     endResetModel();
 }
 
+// --- Move to last page ---
 void PhotoTableModel::lastPage()
 {
 	const QList<Photo>& photos = getActivePhotos(); // Get the current list of photos (filtered or all)
@@ -314,23 +322,26 @@ void PhotoTableModel::lastPage()
     endResetModel();
 }
 
-// --- Private Helper Methods ---
 
+// Const version for read-only access
 const QList<Photo>& PhotoTableModel::getActivePhotos() const 
 {
 	return m_hasFilters ? m_filteredPhotos : m_allPhotos; // Return filtered or all photos based on filter state
 }
 
+// Non-const version for modification
 QList<Photo>& PhotoTableModel::getActivePhotos() 
 {
 	return m_hasFilters ? m_filteredPhotos : m_allPhotos; // Return filtered or all photos based on filter state
 }
 
+// --- Convert visible row index to real index in active photo list ---
 int PhotoTableModel::getRealIndex(int row) const 
 {
     return m_currentPage * m_pageSize + row; 
 }
 
+// --- Check if any filters are active ---
 bool PhotoTableModel::hasActiveFilters() const 
 {
 	// Check if any filter criteria are set
@@ -339,7 +350,7 @@ bool PhotoTableModel::hasActiveFilters() const
         (m_filterMinRating > 0);
 }
 
-
+// --- Check if a photo passes all active filters ---
 bool PhotoTableModel::photoPassesFilters(const Photo& photo) const 
 {
     // Date filter
@@ -365,7 +376,7 @@ bool PhotoTableModel::photoPassesFilters(const Photo& photo) const
     return true;
 }
 
-
+// --- Get text to display for a cell ---
 QVariant PhotoTableModel::getDisplayText(const Photo& photo, int column) const 
 {
     switch (column) 
@@ -380,7 +391,7 @@ QVariant PhotoTableModel::getDisplayText(const Photo& photo, int column) const
     }
 }
 
-
+// --- Get decoration (icon/image) for a cell ---
 QVariant PhotoTableModel::getDecoration(const Photo& photo, int column) const 
 {
 	// Preview column shows the photo thumbnail
@@ -418,9 +429,7 @@ QVariant PhotoTableModel::getDecoration(const Photo& photo, int column) const
     return QVariant();
 }
 
-
-
-
+// --- Get tooltip text for a cell ---
 QVariant PhotoTableModel::getTooltip(const Photo& photo, int column) const 
 {
     switch (column) 
@@ -438,6 +447,7 @@ QVariant PhotoTableModel::getTooltip(const Photo& photo, int column) const
     }
 }
 
+// --- Format rating as stars ---
 QString PhotoTableModel::formatRatingStars(int rating) const 
 {
     QString stars;
@@ -449,6 +459,7 @@ QString PhotoTableModel::formatRatingStars(int rating) const
     return stars;
 }
 
+// --- Update photo field based on column ---
 bool PhotoTableModel::updatePhotoField(Photo& photo, int column, const QVariant& value) 
 {
     QString filePath = photo.filePath();
@@ -474,9 +485,7 @@ bool PhotoTableModel::updatePhotoField(Photo& photo, int column, const QVariant&
     }
 }
 
-
 // --- Lazy Loading Interface ---
-
 void PhotoTableModel::initializeWithPaths(const QStringList& allPaths) 
 {
     beginResetModel();
@@ -516,6 +525,7 @@ void PhotoTableModel::initializeWithPaths(const QStringList& allPaths)
    
 }
 
+// --- Get pointer to Photo at given row ---
 Photo * PhotoTableModel::getPhotoPointer(int row) 
 {
 	QList<Photo>& photos = getActivePhotos(); // Get the current list of photos (filtered or all)
@@ -527,19 +537,7 @@ Photo * PhotoTableModel::getPhotoPointer(int row)
     return &photos[realIndex];
 }
 
-
-QList<Photo*> PhotoTableModel::getAllEditedPhotos() 
-{
-    QList<Photo*> edited;
-	QList<Photo>& photos = getActivePhotos(); // Get the current list of photos (filtered or all)
-    for (Photo& photo : photos) 
-    {
-		if (photo.hasEditedVersion()) // Only include photos with edited versions
-            edited.append(&photo);
-    }
-    return edited;
-}
-
+// --- Get list of photos marked for export ---
 QList<Photo*> PhotoTableModel::getPhotosMarkedForExport() 
 {
     QList<Photo*> marked;
@@ -554,8 +552,7 @@ QList<Photo*> PhotoTableModel::getPhotosMarkedForExport()
     return marked;
 }
 
-
-// --- Settings Persistence ---
+// --- Load saved settings ---
 void PhotoTableModel::loadSettings()
 {
     QSettings settings("TssApp", "PhotoViewer");
@@ -601,7 +598,7 @@ void PhotoTableModel::loadSettings()
     }
 }
 
-// Save current settings
+// --- Save current settings ---
 void PhotoTableModel::saveSettings()
 {
     QSettings settings("TssApp", "PhotoViewer");

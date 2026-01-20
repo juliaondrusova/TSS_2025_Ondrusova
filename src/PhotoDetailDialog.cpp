@@ -19,6 +19,7 @@ static double fitScale(const QSize& viewportSize, const QPixmap& pixmap)
     return qMin(factorW, factorH);
 }
 
+// Constructor
 PhotoDetailDialog::PhotoDetailDialog(QWidget* parent)
     : QDialog(parent), isFullscreen(false)
 {
@@ -59,6 +60,7 @@ PhotoDetailDialog::PhotoDetailDialog(QWidget* parent)
     connect(fullscreenBtn, &QPushButton::clicked, this, &PhotoDetailDialog::toggleFullscreen);
 }
 
+// Set the photo to be displayed
 void PhotoDetailDialog::setPhoto(const Photo& photo)
 {
     currentPhoto = photo;
@@ -67,7 +69,7 @@ void PhotoDetailDialog::setPhoto(const Photo& photo)
     originalPixmap = photo.hasEditedVersion() ? photo.editedPixmap() : QPixmap(photo.filePath());
 }
 
-
+// Show event to set initial zoom
 void PhotoDetailDialog::showEvent(QShowEvent* event)
 {
     QDialog::showEvent(event);
@@ -85,6 +87,7 @@ void PhotoDetailDialog::showEvent(QShowEvent* event)
     zoomChanged(fitZoom);
 }
 
+// Handle mouse wheel events for zooming
 void PhotoDetailDialog::wheelEvent(QWheelEvent* event)
 {
     // Ctrl + wheel changes zoom
@@ -105,7 +108,7 @@ void PhotoDetailDialog::wheelEvent(QWheelEvent* event)
     }
 }
 
-
+// Toggle fullscreen mode
 void PhotoDetailDialog::toggleFullscreen()
 {
     // Toggle between fullscreen and normal
@@ -131,7 +134,7 @@ void PhotoDetailDialog::toggleFullscreen()
     }
 }
 
-
+// Update image display based on zoom slider value
 void PhotoDetailDialog::zoomChanged(int value) 
 {
     if (originalPixmap.isNull()) 

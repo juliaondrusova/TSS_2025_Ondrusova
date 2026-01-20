@@ -35,16 +35,19 @@ PhotoData PhotoData::fromJson(const QJsonObject& json)
     };
 }
 
+
 // -------------------------
 //   PhotoMetadataManager
 // -------------------------
 
+// Singleton instance accessor
 PhotoMetadataManager& PhotoMetadataManager::instance() 
 {
 	static PhotoMetadataManager instance; // Singleton instance
     return instance;
 }
 
+// Constructor and Destructor
 PhotoMetadataManager::PhotoMetadataManager() 
 {
 	loadFromFile(); // Load metadata at construction
@@ -55,7 +58,7 @@ PhotoMetadataManager::~PhotoMetadataManager()
 	saveToFile(); // Save metadata at destruction
 }
 
-
+// Default file path for metadata storage
 QString PhotoMetadataManager::defaultFilePath() const 
 {
 	const QString basePath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation); // e.g., %APPDATA%/PhotoManager on Windows
@@ -63,6 +66,7 @@ QString PhotoMetadataManager::defaultFilePath() const
     return basePath + "/photo_metadata.json";
 }
 
+// Load metadata from JSON file
 bool PhotoMetadataManager::loadFromFile(const QString& filePath) 
 {
     const QString path = filePath.isEmpty() ? defaultFilePath() : filePath;
@@ -91,7 +95,7 @@ bool PhotoMetadataManager::loadFromFile(const QString& filePath)
     return true;
 }
 
-
+// Save metadata to JSON file
 bool PhotoMetadataManager::saveToFile(const QString& filePath) 
 {
     QString path = filePath.isEmpty() ? m_currentFilePath : filePath;
@@ -114,12 +118,14 @@ bool PhotoMetadataManager::saveToFile(const QString& filePath)
     return true;
 }
 
+// Get metadata for a specific photo
 PhotoData PhotoMetadataManager::getPhotoData(const QString& filePath) const 
 {
 	const QString key = QFileInfo(filePath).absoluteFilePath(); // Use absolute path as key
     return m_metadata.value(key, PhotoData{ key }); 
 }
 
+// Set rating for a specific photo
 void PhotoMetadataManager::setRating(const QString& filePath, int rating) 
 {
 	const QString key = QFileInfo(filePath).absoluteFilePath(); // Use absolute path as key
@@ -128,6 +134,7 @@ void PhotoMetadataManager::setRating(const QString& filePath, int rating)
     m_metadata[key] = data;
 }
 
+// Set tag for a specific photo
 void PhotoMetadataManager::setTag(const QString& filePath, const QString& tag) 
 {
 	const QString key = QFileInfo(filePath).absoluteFilePath(); // Use absolute path as key
@@ -136,6 +143,7 @@ void PhotoMetadataManager::setTag(const QString& filePath, const QString& tag)
     m_metadata[key] = data;
 }
 
+// Set comment for a specific photo
 void PhotoMetadataManager::setComment(const QString& filePath, const QString& comment) 
 {
 	const QString key = QFileInfo(filePath).absoluteFilePath(); // Use absolute path as key
@@ -144,6 +152,7 @@ void PhotoMetadataManager::setComment(const QString& filePath, const QString& co
     m_metadata[key] = data;
 }
 
+// Remove metadata entries for files that no longer exist
 void PhotoMetadataManager::cleanupNonExistentFiles() 
 {
 	for (auto it = m_metadata.begin(); it != m_metadata.end();) // Iterate through metadata entries

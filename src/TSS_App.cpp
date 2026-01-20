@@ -10,7 +10,8 @@
 #include <QProgressDialog>
 #include <QApplication>
 #include <QSettings>
-
+ 
+// --- Constructor ---
 TSS_App::TSS_App(QWidget* parent)
     : QMainWindow(parent)
 {
@@ -184,12 +185,12 @@ TSS_App::TSS_App(QWidget* parent)
     }
 }
 
-
+// --- Destructor ---
 TSS_App::~TSS_App() {
     saveSettings();
 }
 
-// --- Settings Persistence ---
+// --- Load and Save Settings ---
 void TSS_App::loadSettings()
 {
     QSettings settings("TssApp", "PhotoViewer");
@@ -277,6 +278,7 @@ void TSS_App::saveSettings()
     model->saveSettings();
 }
 
+// --- Import Photos ---
 void TSS_App::importPhotos()
 {
     PhotoMetadataManager::instance().loadFromFile();
@@ -356,7 +358,7 @@ void TSS_App::importPhotos()
     updatePageLabel(); // Update pagination label
 }
 
-
+// --- Export Photos ---
 void TSS_App::exportPhotos() {
     auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
 
@@ -378,7 +380,7 @@ void TSS_App::exportPhotos() {
     delete exportDialog;
 }
 
-
+// --- Update Pagination Label ---
 void TSS_App::updatePageLabel()
 {
     auto model = static_cast<PhotoTableModel*>(ui.tableView->model());
@@ -395,13 +397,14 @@ void TSS_App::updatePageLabel()
     ui.btnLastPage->setEnabled(current < total);
 }
 
+// --- Toggle Dark Mode ---
 void TSS_App::toggleDarkMode()
 {
     m_darkMode = !m_darkMode;
     ThemeUtils::setWidgetDarkMode(this, m_darkMode); // Apply theme to main window
 }
 
-
+// --- Event Filter for Enter Key in Filter Inputs ---
 bool TSS_App::eventFilter(QObject* obj, QEvent* event)
 {
   
@@ -429,6 +432,7 @@ bool TSS_App::eventFilter(QObject* obj, QEvent* event)
     return QMainWindow::eventFilter(obj, event);
 }
 
+// --- Handle Close Event ---
 void TSS_App::closeEvent(QCloseEvent* event)
 {
     saveSettings();

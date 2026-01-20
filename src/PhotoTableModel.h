@@ -63,13 +63,6 @@ public:
     void addPhoto(const Photo& photo);
 
     /**
-     * @brief Get photo at specific row (relative to current page)
-     * @param row Row index within current page
-     * @return Copy of the requested Photo
-     */
-    Photo photoAt(int row) const;
-
-    /**
      * @brief Returns pointer to photo at selected row (current page).
      * @param row Row index relative to current page.
      * @return Pointer to Photo in internal storage.
@@ -153,12 +146,6 @@ public:
     * @param allPaths List of absolute file paths.
     */
     void initializeWithPaths(const QStringList& allPaths);
-
-    /**
-     * @brief Returns all photos that were edited.
-     * @return List of pointers to edited photos.
-     */
-    QList<Photo*> getAllEditedPhotos();
 
     /**
      * @brief Access active (filtered or unfiltered) photos.
