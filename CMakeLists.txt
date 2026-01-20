@@ -131,6 +131,28 @@ target_include_directories(tst_TSS_AppIntegration
 
 deploy_qt_for_target(tst_TSS_AppIntegration)
 
+
+# 2.3) Unit Test
+add_executable(tst_TSS_AppUnit
+    tests/TestTSSAppUnit.cpp
+    src/PhotoTableModel.cpp
+    src/PhotoTableModel.h
+    src/PhotoMetadata.cpp
+    src/PhotoMetadata.h
+    src/Photo.cpp              
+    src/Photo.h
+)
+
+target_link_libraries(tst_TSS_AppUnit
+    PRIVATE Qt6::Widgets Qt6::Core Qt6::Gui Qt6::Test
+)
+
+target_include_directories(tst_TSS_AppUnit
+    PRIVATE ${PROJECT_SRC_DIR}
+)
+
+deploy_qt_for_target(tst_TSS_AppUnit)
+
 # =====================================================
 # 3) Registrácia testov pre ctest
 # =====================================================
@@ -142,4 +164,8 @@ add_test(NAME gui_TSS_App
 
 add_test(NAME integration_TSS_App
     COMMAND tst_TSS_AppIntegration
+)
+
+add_test(NAME unit_TSS_App
+    COMMAND tst_TSS_AppUnit
 )

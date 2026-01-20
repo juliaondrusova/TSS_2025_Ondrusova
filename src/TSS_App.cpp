@@ -279,8 +279,7 @@ void TSS_App::saveSettings()
 
 void TSS_App::importPhotos()
 {
-    auto& metaManager = PhotoMetadataManager::instance();
-    metaManager.loadFromFile(); // Load existing metadata
+    PhotoMetadataManager::instance().loadFromFile();
 
     QString startPath = m_currentFolderPath.isEmpty() ? QDir::homePath() : m_currentFolderPath;
     QString dirPath = QFileDialog::getExistingDirectory(
