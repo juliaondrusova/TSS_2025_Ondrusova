@@ -210,6 +210,12 @@ public:
      */
     QPixmap getDisplayPixmap() const { return m_hasEditedVersion ? m_editedPixmap : QPixmap(m_filePath); }
 
+    /**
+     * @brief Sets whether the photo is a GIF image.
+     * @param isGif True if the photo is a GIF, false otherwise.
+	 */
+    bool isGif() const { return m_isGif; }
+
 private:
     QString m_filePath;         ///< Absolute path to the photo.
     QString m_tag;              ///< Optional tag (label).
@@ -222,4 +228,6 @@ private:
     QPixmap m_editedPixmap;     ///< Edited version of the photo.
     bool m_hasEditedVersion;    ///< True if edited version exists.
     bool m_markedForExport;     ///< True if marked for export.
+
+    bool m_isGif = false;
 };

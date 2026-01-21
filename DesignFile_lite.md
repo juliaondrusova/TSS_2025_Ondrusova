@@ -86,26 +86,10 @@ The system is divided into three logical layers:
 
 Feature: **Export Photos**
 
-### 3.1 Class Diagram (UML)
 
-Classes involved: `PhotoExportDialog`, `Photo`, `PhotoMetadataManager`, `PhotoTableModel`  
-
-### 3.2 Class Descriptions
-**PhotoExportDialog**  
-- Attributes: m_photosToExport, m_tableWidget, m_progressBar  
-- Methods: onBrowseClicked(), onExportClicked(), getSelectedPhotos(), validateAllPaths(), exportPhotos()  
-
-**Photo**  
-- Attributes: filePath, tag, rating, comment  
-- Methods: toJson(), fromJson()  
-
-**PhotoMetadataManager**  
-- Attributes: m_metadata, m_currentFilePath  
-- Methods: loadFromFile(), saveToFile(), getPhotoData(), setRating(), setTag(), setComment()  
-
-**PhotoTableModel**  
-- Attributes: m_allPhotos, m_filteredPhotos, m_pageSize, m_currentPage  
-- Methods: addPhoto(), photoAt(), getPhotosMarkedForExport(), setDateFilter(), setTagFilter(), setRatingFilter(), applyFilters()  
+<p align="center">
+  <img src="diagrams/uml_exportPhotos" alt="Export Photos" width="100%">
+</p>
 
 ---
 

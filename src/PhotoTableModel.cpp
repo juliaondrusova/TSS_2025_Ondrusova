@@ -157,21 +157,20 @@ void PhotoTableModel::sort(int column, Qt::SortOrder order)
     // std::sort goes through all items and sorts them based on the comparison function
     // The lambda compares two photos and returns true if the first should come before the second
     std::sort(photos.begin(), photos.end(), [column, ascending](const Photo& a, const Photo& b) {
-        switch (column) 
+        switch (column)
         {
         case Name:
-			return ascending ? a.filePath() < b.filePath() : a.filePath() > b.filePath(); // Sort by file path
+            return ascending ? a.filePath() > b.filePath() : a.filePath() < b.filePath();
         case Size:
-			return ascending ? a.sizeBytes() < b.sizeBytes() : a.sizeBytes() > b.sizeBytes(); // Sort by size in bytes
+            return ascending ? a.sizeBytes() > b.sizeBytes() : a.sizeBytes() < b.sizeBytes();
         case DateTime:
-			return ascending ? a.dateTime() < b.dateTime() : a.dateTime() > b.dateTime(); // Sort by date/time
+            return ascending ? a.dateTime() > b.dateTime() : a.dateTime() < b.dateTime();
         case Rating:
-            return ascending ? a.rating() < b.rating() : a.rating() > b.rating(); // Sort by rating
+            return ascending ? a.rating() > b.rating() : a.rating() < b.rating();
         default:
-            return false; // Unknown column ? keep the current order
+            return false;
         }
-        });
-
+	});
 	emit layoutChanged(); // Notify view that the layout has changed
 }
 

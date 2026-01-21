@@ -10,7 +10,8 @@
 #include <QProgressDialog>
 #include <QApplication>
 #include <QSettings>
- 
+
+
 // --- Constructor ---
 TSS_App::TSS_App(QWidget* parent)
     : QMainWindow(parent)
@@ -119,6 +120,29 @@ TSS_App::TSS_App(QWidget* parent)
         Photo* photo = model->getPhotoPointer(index.row());
         if (!photo) return;
 
+        if (photo->isGif()) {
+
+            QMessageBox msg(this);
+            msg.setIcon(QMessageBox::Warning);
+            msg.setWindowTitle("Editing GIF");
+            msg.setText(
+                "You are about to edit a GIF image.\n\n"
+                "After editing, it will NOT be possible to save it as a GIF.\n"
+                "The image can only be saved as PNG or JPEG."
+            );
+
+            QPushButton* cancelBtn =
+                msg.addButton("Cancel", QMessageBox::RejectRole);
+            QPushButton* continueBtn =
+                msg.addButton("Continue Editing", QMessageBox::AcceptRole);
+
+            msg.exec();
+
+            if (msg.clickedButton() == cancelBtn)
+                return;
+        }
+
+        // Open editor
         auto editor = new PhotoEditorDialog(photo, this);
         ThemeUtils::setWidgetDarkMode(editor, m_darkMode);
         editor->exec();

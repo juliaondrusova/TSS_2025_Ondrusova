@@ -20,7 +20,7 @@ The system will cover:
 - Adding tags, comments, and ratings to individual photos.
 - Searching by date, tag, and color.
 - Basic edits (crop, rotate, brightness, contrast, saturation).
-- Exporting photos to different formats (.jpg, .png, .HEIC).
+- Exporting photos to different formats (.jpg, .jpeg, .gif, .png).  
 - Adding watermarks.
 - Support for .RAW and .tiff image files (Should have).
 - Dark mode interface (Could have).
@@ -49,7 +49,7 @@ Out of scope:
 
 ### 3.3 Import and Export
 - FR-3.1: The user can import photos from various devices (external drives, folders).  
-- FR-3.2: The user can export photos to other formats (.jpg, .png, .HEIC).  
+- FR-3.2: The user can export photos to other formats (.jpg, .jpeg, .gif, .png).  
 - FR-3.3: The user can select the target folder for export.  
 
 ---

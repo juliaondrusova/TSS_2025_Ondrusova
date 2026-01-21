@@ -24,7 +24,7 @@ Create a simple and fast Windows application (in C++ and Qt) that allows users t
 ## 4. User Stories (Backlog) with MoSCoW
 
 - [M] As a user, I want to crop, rotate, and adjust brightness, contrast, and saturation of my photos.
-- [M] As a user, I want the application to support .jpg, .png and .HEIC image file types.
+- [M] As a user, I want the application to support .jpg, jpeg, gif and .png image file types.
 - [M] As a user, I want to assign tags, ratings, and comments to photos.
 - [M] As a user, I want to search photos by date, tag, and rating.
 - [M] As a user, I want to apply watermarks with a logo to my photos.

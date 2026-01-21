@@ -29,6 +29,8 @@ Photo::Photo(const QString& path)
     const qint64 sizeBytes = info.size();
     m_sizeBytes = sizeBytes;
 
+    m_isGif = QFileInfo(m_filePath).suffix().compare("gif", Qt::CaseInsensitive) == 0;
+
 	if (sizeBytes < ONE_KB) 
     { // Bytes
         m_size = QString::number(sizeBytes) + " B";
