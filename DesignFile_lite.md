@@ -88,7 +88,7 @@ Feature: **Export Photos**
 
 
 <p align="center">
-  <img src="diagrams/uml_exportPhotos" alt="Export Photos" width="100%">
+  <img src="diagrams/uml_exportDialog" alt="Export Photos via Export Dialog" width="100%">
 </p>
 
 ---
